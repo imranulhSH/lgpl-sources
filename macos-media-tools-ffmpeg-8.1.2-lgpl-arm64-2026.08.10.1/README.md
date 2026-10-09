@@ -10,16 +10,19 @@ This folder and its release are the corresponding source for the `ffmpeg` and
 Nsurator for Mac builds made from the app's source on or after 2026-08-11,
 when this tools artifact was pinned. That covers versions 6.9.9 through 6.9.17
 and 5.9.17 (the version line was renumbered from 6.9.x to 5.9.x on
-2026-09-21). Builds made before 2026-08-11 bundled different tools and are not
-covered by this release.
+2026-09-21). Builds made before 2026-08-11 (6.9.1 through 6.9.8) bundled
+different tools; they were internal builds and were never distributed, so no
+release is needed for them.
 
 This release covers only the `ffmpeg` and `ffprobe` programs. The player
 libraries linked into the app itself are a separate library set: for builds
 made on or after 2026-09-24 they are covered by the release
 `macos-ffmpeg-artifact-2026.09.24.1`. Builds made from 2026-08-11 to
-2026-09-23 used earlier player library builds, which no release in this
-repository covers. The versions above say which builds contain these tools;
-they are not a list of builds that are fully covered here.
+2026-09-23 (6.9.9 through 6.9.17, and 5.9.17 builds made before 2026-09-24)
+used earlier player library builds; they were internal builds and were never
+distributed, so no release is needed for those libraries. The versions above
+say which builds contain these tools; of those, only builds made on or after
+2026-09-24 were distributed.
 
 The tools are separate executables that the app starts as child processes:
 
@@ -116,12 +119,16 @@ copy.
 ## 中文说明
 
 本目录和同名 Release 是 Nsurator for Mac 附带的 `ffmpeg` / `ffprobe` 命令行工具的
-对应源码，适用于 2026-08-11 之后构建的版本（6.9.9 至 6.9.17，以及 5.9.17）。
+对应源码，适用于 2026-08-11 之后构建的版本（6.9.9 至 6.9.17，以及 5.9.17），其中
+只有 2026-09-24 及之后的构建对外发布过。
 
+- 2026-08-11 之前的构建（6.9.1 至 6.9.8）附带的是另一套工具，均为内部构建，从未
+  对外发布，因此不需要对应的 Release。
 - 本 Release 只覆盖 `ffmpeg` / `ffprobe` 这两个程序。应用本身链接的播放核心库是
   另一套：2026-09-24 及之后的构建由 `macos-ffmpeg-artifact-2026.09.24.1` 覆盖；
-  2026-08-11 至 2026-09-23 之间的构建使用更早的播放核心库构建，本仓库没有对应的
-  Release。上面的版本号说明哪些构建包含这两个工具，并不表示这些构建已全部覆盖。
+  2026-08-11 至 2026-09-23 之间的构建（6.9.9 至 6.9.17，以及 2026-09-24 之前构建的
+  5.9.17）使用更早的播放核心库构建，均为内部构建，从未对外发布，因此这些库不需要
+  对应的 Release。
 - 两个工具是独立程序，静态链入 FFmpeg 8.1.2、FriBidi 1.0.16（LGPL）以及 libass、
   FreeType、HarfBuzz、libunibreak、libpng（宽松许可）。全部未修改，因此没有补丁包，
   编译的源码就是附带的上游源码包。

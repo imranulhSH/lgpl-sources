@@ -9,8 +9,9 @@ libbluray, libudfread and dav1d code inside Nsurator for Mac's player.
 
 Nsurator for Mac 5.9.17 (build 8), as built from the app's source on or after
 2026-09-24 (the commit that pinned this artifact) up to at least 2026-10-09.
-Mac builds made before 2026-09-24 used older artifacts and are not covered by
-this release.
+Mac builds made before 2026-09-24 used older artifacts; they were internal
+builds and were never distributed, so no release is needed for those
+artifacts.
 
 The libraries are linked **statically** into two executables in the app:
 
@@ -155,6 +156,8 @@ to the developer's team) may not work in that copy.
 本目录和同名 Release 是 Nsurator for Mac 5.9.17（build 8，2026-09-24 起的构建）
 播放核心中 FFmpeg 8.1.2、libbluray 1.4.1、libudfread 1.2.0、dav1d 1.5.3 的对应源码。
 
+- 2026-09-24 之前的 Mac 构建使用更早的播放核心库构建，均为内部构建，从未对外
+  发布，因此不需要对应的 Release。
 - 这些库**静态链接**进应用主程序 `NsuratorNative` 和解码辅助进程
   `NsuratorDecoderProbeHelper`。
 - 我们改过 FFmpeg（7 个补丁，其中只有 `aviobuf.c`、`matroskadec.c` 的修改会被编译，

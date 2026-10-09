@@ -25,11 +25,15 @@ Each folder's README gives the exact source pins, the configure flags, how to
 rebuild, how to replace the library in the app, and anything we could not pin.
 
 A release covers only the libraries in its own row. The "App builds" column
-says which builds contain those libraries. Mac builds made from 2026-08-11 to
-2026-09-23, for example, contain the ffmpeg/ffprobe tools covered here, but
-their player libraries came from earlier library builds that no release in
-this repository covers. Builds made before the dates in the table are not
-covered either.
+says which builds contain those libraries.
+
+Earlier Mac builds were internal builds and were never distributed, so no
+release is needed for them. They include 6.9.1 through 6.9.8 (2026-07-31 to
+2026-08-10), which bundled different ffmpeg and ffprobe tools, and every build
+that used a player library build from before 2026-09-24, including all builds
+made from 2026-08-11 to 2026-09-23 (6.9.9 through 6.9.17, and 5.9.17 builds
+made before 2026-09-24). Of the Mac builds in the table, only those made on or
+after 2026-09-24 were distributed.
 
 ## Getting the source
 
@@ -147,10 +151,13 @@ Nsurator 应用本身不开源，其源代码不在这里。本仓库只包含�
 每个目录的 README 写明了确切的源码版本与哈希、配置参数、重新构建和替换的方法，
 以及无法锁定的部分。
 
-每个 Release 只覆盖它那一行列出的库；“应用版本”一列说明哪些构建包含这些库。例如
-2026-08-11 至 2026-09-23 之间的 Mac 构建包含这里覆盖的 ffmpeg / ffprobe 工具，
-但它们的播放核心库来自更早的库构建，本仓库没有对应的 Release。早于表中日期的
-构建同样不在覆盖范围内。
+每个 Release 只覆盖它那一行列出的库；“应用版本”一列说明哪些构建包含这些库。
+
+更早的 Mac 构建都是内部构建，从未对外发布，因此不需要对应的 Release。其中包括
+6.9.1 至 6.9.8（2026-07-31 至 2026-08-10，附带的是另一套 ffmpeg / ffprobe 工具），
+以及所有使用 2026-09-24 之前播放核心库构建的版本，即 2026-08-11 至 2026-09-23
+之间的全部构建（6.9.9 至 6.9.17，以及 2026-09-24 之前构建的 5.9.17）。表中的
+Mac 构建只有 2026-09-24 及之后的构建对外发布过。
 
 ### 获取源码
 

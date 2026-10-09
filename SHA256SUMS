@@ -1,5 +1,5 @@
 246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30  LICENSE
-e0e9a1b4b458a1982a14ab0cb6b71e7e89ffc283313529eb8d357d3bdead66b7  README.md
+489f9965d41184e55849d08795ae69282b0725f46069807ed6490c037d045b14  README.md
 e9c85d43804734608fbe8f4739c2ddaeaab1e0329bd90c5a064c0b8229327e4b  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/CHANGES.md
 66698339a36a34eb64b7f814c45aaf9f2420e4038d42078ced31e3d3c56288d6  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/README.md
 20c17d8b8c48a600800dfd14f95d5cb9ff47066a9641ddeab48dc54aec96e331  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/amsmb2/LICENSE
@@ -122,7 +122,7 @@ b3aa400aca6d2ba1f0bd03bd98d03d1fe7489a3bbb26969d72016360af8a5c9d  macos-ffmpeg-a
 dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551  macos-ffmpeg-artifact-2026.09.24.1/records/artifact/licenses/libudfread-COPYING
 78d8c64300a35efa16a630eda78a808600aeb39b61a9c52a5399b78c6d1f000d  macos-ffmpeg-artifact-2026.09.24.1/records/artifact/nsurator-player-core-ffmpeg-apple-manifest.json
 1cae6c709e35c459ac2b590964f2203693426a8d6f1b5909819a2f82391af200  macos-ffmpeg-artifact-2026.09.24.1/release-assets.sha256
-4c7eedac1748992e92f9d7afc7cf5c6d012aec938455f754570bc3a25ee2d267  macos-ffmpeg-artifact-2026.10.09.1/README.md
+68feb6ace00529f64b2a965ddada7fafad629f2798770e8ed14b3fff24732988  macos-ffmpeg-artifact-2026.10.09.1/README.md
 186f42c2290e0ff8873cd5faf23f1615ae4ee73cdf20504ea1801ee42e43c2d0  macos-ffmpeg-artifact-2026.10.09.1/build/nsurator-macos-native/Config/nsurator-player-core-ffmpeg-artifact.lock.json
 065c10852d6d3bae8d8ada4137c0aebe0823e6c692c1504c5f8f872b0bdc56fd  macos-ffmpeg-artifact-2026.10.09.1/build/nsurator-macos-native/Config/nsurator-player-core-ffmpeg-sources.json
 038a29b2480e2fa107ab285423dd5468c4eeace2add1b4af3d0746bbc3d99c4a  macos-ffmpeg-artifact-2026.10.09.1/build/nsurator-macos-native/script/build_nsurator_player_core_ffmpeg_artifact.sh
@@ -166,6 +166,7 @@ dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551  macos-ffmpeg-a
 2f1c496ec65a1ca37a3ccc6b6b9b2147a06f29734dbc224a81e99d1f653b7523  macos-ffmpeg-artifact-2026.10.09.1/libudfread/README.md
 f7b0e5c599137fc7ed769aefe8a2805181468e950b853bb46eb226921ab27b2a  macos-ffmpeg-artifact-2026.10.09.1/records/app/NsuratorDecoderProbeHelper-imports.txt
 f7b0e5c599137fc7ed769aefe8a2805181468e950b853bb46eb226921ab27b2a  macos-ffmpeg-artifact-2026.10.09.1/records/app/NsuratorNative-imports.txt
+b508870ca3126b5d1afb50f464e3271b9558751b7e36ece0176a1102a7340f8d  macos-ffmpeg-artifact-2026.10.09.1/records/app/optional-imports.txt
 065c10852d6d3bae8d8ada4137c0aebe0823e6c692c1504c5f8f872b0bdc56fd  macos-ffmpeg-artifact-2026.10.09.1/records/artifact/NSURATOR-ARTIFACT-PROVENANCE.json
 7481503f9f73e41ca0113facf606f9c3b9aaaba96a68f700bfa87baa4aa2aeb1  macos-ffmpeg-artifact-2026.10.09.1/records/artifact/distribution/SOURCE-CODE.md
 55b02277dc42ddd97a0fa74f1589bfcd7e349fb7dffa7298477b4a773b144b71  macos-ffmpeg-artifact-2026.10.09.1/records/artifact/distribution/SOURCE-PROVENANCE.json
@@ -175,7 +176,7 @@ f7b0e5c599137fc7ed769aefe8a2805181468e950b853bb46eb226921ab27b2a  macos-ffmpeg-a
 a03599a37a2bd780193e7cdeeeabfe5b2104ff0bd7630f4b37fa8a68df10ed46  macos-ffmpeg-artifact-2026.10.09.1/records/artifact/distribution/relink-materials-manifest/macosx-arm64-FRAMEWORK-RECORD.json
 b5b4c869ddad235e09bd21a965ed19f07a76f47970fb77b3d512620fa7a0392a  macos-ffmpeg-artifact-2026.10.09.1/records/artifact/nsurator-player-core-ffmpeg-apple-manifest.json
 a03599a37a2bd780193e7cdeeeabfe5b2104ff0bd7630f4b37fa8a68df10ed46  macos-ffmpeg-artifact-2026.10.09.1/records/framework/FRAMEWORK-RECORD.json
-cc7191dc72b7f16fe22955aa63e43e70f55c359b87f85fa888fe8b61737f55cd  macos-ffmpeg-artifact-2026.10.09.1/release-assets.sha256
+5eab3bfad902397d7220daef80641dd78e5976f5060cf39b18943646e1663f2a  macos-ffmpeg-artifact-2026.10.09.1/release-assets.sha256
 084336067c1d8ac28cdd7b53de4a1eead80475a128546ba538c368486ef624e4  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/README.md
 1e2fd7bb71eddd620466bc518dbf5702ea7e5ca9f11f0f28503c022c8846d154  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/build/Config/media-tools-artifact.lock.json
 9eebeee67657ea9d3775891a0a428f3a82ccad4f06afc357f6e110ae4457416d  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/build/Config/media-tools-sources.json

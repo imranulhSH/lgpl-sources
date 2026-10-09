@@ -19,7 +19,7 @@ changes to it, or what is needed to rebuild it.
 | [`ios-1.0.1-ffmpeg-runtime-94a31390`](ios-1.0.1-ffmpeg-runtime-94a31390/) | Nsurator for iPhone and iPad 1.0.1 (build 101) | **FFmpeg 8.1** (7 patches), **libbluray 1.4.1** (3 changes), **libudfread** (1.2.0 plus 3 upstream commits), dav1d 1.5.4 | Dynamic framework `VisionPlayerCoreFFmpegRuntime.framework` |
 | [`ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6`](ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/) | Nsurator for iPhone and iPad 1.0.1 (build 101) | **libsmb2** (2 patches) and **AMSMB2 4.0.3** (1 patch) | Dynamic framework `AMSMB2.framework` |
 | [`macos-ffmpeg-artifact-2026.09.24.1`](macos-ffmpeg-artifact-2026.09.24.1/) | Nsurator for Mac 5.9.17 (build 8), builds made on or after 2026-09-24 that pin this artifact | **FFmpeg 8.1.2** (7 patches), **libbluray 1.4.1** (3 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable and its decoder helper |
-| [`macos-ffmpeg-artifact-2026.10.09.1`](macos-ffmpeg-artifact-2026.10.09.1/) | Nsurator for Mac builds that pin artifact 2026.10.09.1 (player core `ebfc8a0`) | The same libraries as 2026.09.24.1, byte for byte | Dynamic framework `NsuratorPlayerCoreFFmpegRuntime.framework`, loaded by the app executable and its decoder helper |
+| [`macos-ffmpeg-artifact-2026.10.09.1`](macos-ffmpeg-artifact-2026.10.09.1/) | Nsurator for Mac builds that pin artifact 2026.10.09.1 (player core `ebfc8a0`, then `0d5c2fe`): the first Mac App Store version after 5.9.17 (build 8) and later | The same libraries as 2026.09.24.1, byte for byte | Dynamic framework `NsuratorPlayerCoreFFmpegRuntime.framework`, loaded by the app executable and its decoder helper |
 | [`macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1`](macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/) | Nsurator for Mac builds made on or after 2026-08-11 (6.9.9 through 6.9.17, and 5.9.17) | **FFmpeg 8.1.2**, **FriBidi 1.0.16**, libass 0.17.5, FreeType 2.14.3, HarfBuzz 14.3.0, libunibreak 7.0, libpng 1.6.58 (all unmodified) | Separate `ffmpeg` and `ffprobe` programs |
 
 Each folder's README gives the exact source pins, the configure flags, how to
@@ -155,7 +155,7 @@ Nsurator 应用本身不开源，其源代码不在这里。本仓库只包含�
 | `ios-1.0.1-ffmpeg-runtime-94a31390` | Nsurator iPhone/iPad 1.0.1（101） | **FFmpeg 8.1**（7 个补丁）、**libbluray 1.4.1**（3 处修改）、**libudfread**（1.2.0 之后 3 个上游提交）、dav1d 1.5.4 | 动态框架 `VisionPlayerCoreFFmpegRuntime.framework` |
 | `ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6` | Nsurator iPhone/iPad 1.0.1（101） | **libsmb2**（2 个补丁）、**AMSMB2 4.0.3**（1 个补丁） | 动态框架 `AMSMB2.framework` |
 | `macos-ffmpeg-artifact-2026.09.24.1` | Nsurator for Mac 5.9.17（build 8），2026-09-24 及之后、固定到此 artifact 的构建 | **FFmpeg 8.1.2**（7 个补丁）、**libbluray 1.4.1**（3 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序和解码辅助进程 |
-| `macos-ffmpeg-artifact-2026.10.09.1` | 固定到 artifact 2026.10.09.1（播放核心 `ebfc8a0`）的 Mac 构建 | 与 2026.09.24.1 完全相同的库 | 动态框架 `NsuratorPlayerCoreFFmpegRuntime.framework`，由应用主程序和解码辅助进程加载 |
+| `macos-ffmpeg-artifact-2026.10.09.1` | 固定到 artifact 2026.10.09.1（播放核心 `ebfc8a0`，之后为 `0d5c2fe`）的 Mac 构建：5.9.17（build 8）之后提交的第一个 Mac App Store 版本及以后 | 与 2026.09.24.1 完全相同的库 | 动态框架 `NsuratorPlayerCoreFFmpegRuntime.framework`，由应用主程序和解码辅助进程加载 |
 | `macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1` | 2026-08-11 及之后构建的 Mac 版（6.9.9 至 6.9.17，以及 5.9.17） | **FFmpeg 8.1.2**、**FriBidi 1.0.16**、libass、FreeType、HarfBuzz、libunibreak、libpng（均未修改） | 独立的 `ffmpeg`、`ffprobe` 程序 |
 
 每个目录的 README 写明了确切的源码版本与哈希、配置参数、重新构建和替换的方法，

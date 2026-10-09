@@ -8,9 +8,13 @@ builds that link them **dynamically**.
 
 ## Which app builds use it
 
-Nsurator for Mac builds made from the app's source at or after the commit that
-pinned artifact 2026.10.09.1 (player core `ebfc8a0`). Earlier distributed Mac
-builds (on or after 2026-09-24) used artifact 2026.09.24.1, whose release is
+Nsurator for Mac builds made from the app's source at or after commit
+`3fd9615e`, which pinned artifact 2026.10.09.1 (player core `ebfc8a0`, and from
+the merge on `0d5c2fe`, which packages the framework with the same script).
+The first Mac App Store version that uses it is the first one submitted after
+5.9.17 (build 8); 5.9.17 (build 8) itself and every earlier distributed Mac
+build (on or after 2026-09-24) used artifact 2026.09.24.1, linked statically,
+whose release is
 [`macos-ffmpeg-artifact-2026.09.24.1`](../macos-ffmpeg-artifact-2026.09.24.1/).
 
 The libraries are in one framework inside the app:
@@ -80,8 +84,8 @@ code signature; compare the UUID (`dwarfdump --uuid`) instead.
 `records/framework/FRAMEWORK-RECORD.json` has the exact link command (with
 paths relative to the artifact), the checksum of every input archive, the
 checksum of the exported symbol list, and the compiler and linker versions.
-The framework was built three times, in three different directories, and the
-three binaries were identical.
+The framework was built five times, in five different directories, and the
+five binaries were identical.
 
 ## Folder contents
 
@@ -93,7 +97,7 @@ three binaries were identical.
 | `build/nsurator-macos-native/` | The Mac app repository's artifact script (`--repackage-from-artifact`), its helpers and the two locks at commit `3fd9615e`, which pinned this artifact |
 | `records/framework/` | `FRAMEWORK-RECORD.json` |
 | `records/artifact/` | Records shipped inside the artifact: provenance, manifest, relinking notes, relink-materials manifest |
-| `records/app/` | The symbols the app executable and the decoder helper import from the framework |
+| `records/app/` | The symbols the app executable and the decoder helper import from the framework (`*-imports.txt`), and the seven optional ones they look up at launch (`optional-imports.txt`) |
 | `release-assets.sha256` | SHA-256 of every file attached to the release |
 
 ## Rebuilding the libraries
@@ -137,8 +141,12 @@ app's object files:
 
 1. Build the libraries (modified or not) and the framework as above. Keep the
    framework name and the install name, and keep the functions the app imports
-   (`records/app/` lists them; leaving the configure flags as they are keeps
-   them all).
+   (`records/app/*-imports.txt` lists them; leaving the configure flags as they
+   are keeps them all). The app also looks up seven optional functions at
+   launch (`records/app/optional-imports.txt`, `avpriv_nsurator_*`), which
+   later versions of our FFmpeg patches add; the libraries of this release do
+   not have them, the app works without them, and a framework of yours that
+   defines them is the one the app calls.
 2. Replace `Nsurator.app/Contents/Frameworks/NsuratorPlayerCoreFFmpegRuntime.framework`
    with your framework.
 3. Sign the app again, inner code first: the framework, then
@@ -169,7 +177,10 @@ to the developer's team) may not work in that copy.
 
 本目录和同名 Release 是 Nsurator for Mac 播放核心中 FFmpeg 8.1.2、libbluray 1.4.1、
 libudfread 1.2.0、dav1d 1.5.3 的对应源码，适用于以**动态链接**方式使用这些库的构建
-（应用源码中固定到 artifact 2026.10.09.1、播放核心 `ebfc8a0` 及之后的构建）。
+（应用源码提交 `3fd9615e` 固定到 artifact 2026.10.09.1，即播放核心 `ebfc8a0`，合并后为
+用同一脚本打包框架的 `0d5c2fe`；此提交及之后的构建都使用它）。第一个使用它的 Mac App Store
+版本是 5.9.17（build 8）之后提交的第一个版本；5.9.17（build 8）本身及 2026-09-24 起分发的
+更早构建以静态方式使用 artifact 2026.09.24.1。
 
 - 这些库放在应用内的一个框架中：
   `Contents/Frameworks/NsuratorPlayerCoreFFmpegRuntime.framework`，应用主程序
@@ -180,11 +191,14 @@ libudfread 1.2.0、dav1d 1.5.3 的对应源码，适用于以**动态链接**方
   本目录重复收录，使本 Release 可独立使用。
 - 框架：install name `@rpath/NsuratorPlayerCoreFFmpegRuntime.framework/Versions/A/NsuratorPlayerCoreFFmpegRuntime`，
   签名前 SHA-256 `d6fe5a3e…1cff`，LC_UUID `58BB2D7D-52C4-3BC0-9CD2-5C811162D69A`
-  （签名不改变 UUID）。在三个不同目录各构建一次，三次结果完全相同。
+  （签名不改变 UUID）。在五个不同目录各构建一次，五次结果完全相同。
 - 重新构建库：与 2026.09.24.1 相同，用 `build/nsurator-player-core-8c27b0c/scripts/build-ffmpeg-apple.sh`
   运行三次，必须保持 `base` 链接配置。然后用
   `build/nsurator-player-core-ebfc8a0/scripts/package-apple-ffmpeg-runtime-framework.sh --build`
   生成框架（命令见上文）。
+- 应用启动时还会查找七个可选函数（`avpriv_nsurator_*`，见 `records/app/optional-imports.txt`），
+  它们来自我们较新版本的 FFmpeg 补丁；本 Release 的库没有这些函数，应用照常工作；
+  如果你的框架定义了它们，应用就调用你的版本。
 - 替换：用你构建的框架（保持框架名与 install name）替换应用内的同名框架，然后按
   “框架 → 解码辅助进程 → 应用”的顺序重新签名：三者用同一个身份签名，或者用
   ad hoc 签名并给应用和辅助进程加上 `com.apple.security.cs.disable-library-validation`

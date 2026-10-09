@@ -1,0 +1,102 @@
+{
+  "architecture": "arm64",
+  "binarySHA256": "d6fe5a3e987b20b6bd255f3940e747bacb9576c9b3e417824b46c8e5632c1cff",
+  "bundleIdentifier": "com.haoyu.nsurator.NsuratorPlayerCoreFFmpegRuntime",
+  "exportListSHA256": "56b7f8a5d5c42965734b3f4142aded667f7d66cbb35fda6e0b12e04b9ab1a39c",
+  "exportedSymbolCount": 7342,
+  "installName": "@rpath/NsuratorPlayerCoreFFmpegRuntime.framework/Versions/A/NsuratorPlayerCoreFFmpegRuntime",
+  "linkCommand": [
+    "/usr/bin/xcrun",
+    "--sdk",
+    "macosx",
+    "clang",
+    "-target",
+    "arm64-apple-macos14.0",
+    "-isysroot",
+    "$(xcrun --sdk macosx --show-sdk-path)",
+    "-dynamiclib",
+    "-Wl,-force_load,install/macosx-arm64/lib/libavfilter.a",
+    "-Wl,-force_load,install/macosx-arm64/lib/libavformat.a",
+    "-Wl,-force_load,install/macosx-arm64/lib/libavcodec.a",
+    "-Wl,-force_load,install/macosx-arm64/lib/libswresample.a",
+    "-Wl,-force_load,install/macosx-arm64/lib/libswscale.a",
+    "-Wl,-force_load,install/macosx-arm64/lib/libavutil.a",
+    "-Wl,-force_load,dependencies/macosx-arm64/lib/libbluray.a",
+    "-Wl,-force_load,dependencies/macosx-arm64/lib/libdav1d.a",
+    "-Wl,-install_name,@rpath/NsuratorPlayerCoreFFmpegRuntime.framework/Versions/A/NsuratorPlayerCoreFFmpegRuntime",
+    "-Wl,-compatibility_version,1.0.0",
+    "-Wl,-current_version,1.0.0",
+    "-Wl,-headerpad_max_install_names",
+    "-framework",
+    "CoreFoundation",
+    "-framework",
+    "DiskArbitration",
+    "-framework",
+    "OpenGL",
+    "-lm",
+    "-lz",
+    "-framework",
+    "VideoToolbox",
+    "-framework",
+    "CoreImage",
+    "-framework",
+    "AppKit",
+    "-framework",
+    "CoreMedia",
+    "-framework",
+    "CoreVideo",
+    "-framework",
+    "CoreServices",
+    "-lbz2",
+    "-liconv",
+    "-framework",
+    "AudioToolbox",
+    "-o",
+    "NsuratorPlayerCoreFFmpegRuntime.framework/Versions/A/NsuratorPlayerCoreFFmpegRuntime"
+  ],
+  "linkedSDKVersion": "27.0",
+  "minimumOSVersion": "14.0",
+  "name": "NsuratorPlayerCoreFFmpegRuntime",
+  "relativePath": "NsuratorPlayerCoreFFmpegRuntime.framework",
+  "schemaVersion": 1,
+  "shortVersion": "8.1.2",
+  "staticInputs": [
+    {
+      "relativePath": "install/macosx-arm64/lib/libavfilter.a",
+      "sha256": "b0a527e79bb59444f6e06d78818c6869ff08688f7a20d4f23dc0b67ecc245274"
+    },
+    {
+      "relativePath": "install/macosx-arm64/lib/libavformat.a",
+      "sha256": "12283b83ff8500edea2f39824d69f230e383166f287be79d4236886ddebafd2d"
+    },
+    {
+      "relativePath": "install/macosx-arm64/lib/libavcodec.a",
+      "sha256": "d92be477f17fc8c52e51c3628ee161d02851141991267a1be7bae4d775f1b338"
+    },
+    {
+      "relativePath": "install/macosx-arm64/lib/libswresample.a",
+      "sha256": "1c0c674eb1fc9b7c5f2f10448069e67b6f10213587264989ad6281d4493dcab0"
+    },
+    {
+      "relativePath": "install/macosx-arm64/lib/libswscale.a",
+      "sha256": "1a46ce102e3530ee3b33f22175fb6fc63ca1f6d440587877764d88d48e42eb78"
+    },
+    {
+      "relativePath": "install/macosx-arm64/lib/libavutil.a",
+      "sha256": "ced8cb36d068d4b95eda72b31bccc56678a0cfe86642d1b2c49ab1b86e666caf"
+    },
+    {
+      "relativePath": "dependencies/macosx-arm64/lib/libbluray.a",
+      "sha256": "cfced98757c3508edfee3408b0148a5fa9df36ed4455e843b6b19e940843909a"
+    },
+    {
+      "relativePath": "dependencies/macosx-arm64/lib/libdav1d.a",
+      "sha256": "459048e458a2cb875590a925c8f62c2540d397ac358f727a91ba418cbb0de61a"
+    }
+  ],
+  "toolchain": {
+    "clang": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
+    "ld": "@(#)PROGRAM:ld PROJECT:ld-27037.1"
+  },
+  "uuid": "58BB2D7D-52C4-3BC0-9CD2-5C811162D69A"
+}

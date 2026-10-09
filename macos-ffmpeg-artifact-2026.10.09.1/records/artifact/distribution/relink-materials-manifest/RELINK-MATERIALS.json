@@ -1,0 +1,87 @@
+{
+  "artifactManifest": "nsurator-player-core-ffmpeg-apple-manifest.json",
+  "buildConfiguration": "--prefix=/tmp/nsurator-npc-artifact-build-202609241/ffmpeg-install/macosx-arm64 --enable-cross-compile --target-os=darwin --arch=arm64 --cc=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk --enable-static --disable-shared --enable-pic --disable-programs --disable-doc --disable-debug --disable-avdevice --disable-devices --enable-avcodec --enable-avformat --enable-avutil --enable-swresample --enable-swscale --enable-libbluray --enable-videotoolbox --pkg-config=/opt/homebrew/bin/pkg-config --extra-cflags='-target arm64-apple-macos14.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -fembed-bitcode -fPIC -I/tmp/nsurator-npc-artifact-build-202609241/dependencies/macosx-arm64/include' --extra-ldflags='-target arm64-apple-macos14.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -L/tmp/nsurator-npc-artifact-build-202609241/dependencies/macosx-arm64/lib' --enable-libdav1d --disable-network --enable-npc-libbluray",
+  "requiredConfigureFlags": [
+    "--enable-libbluray",
+    "--enable-libdav1d",
+    "--disable-network"
+  ],
+  "runtimeFrameworks": [
+    {
+      "binaryRelativePath": "frameworks/macosx-arm64/NsuratorPlayerCoreFFmpegRuntime.framework/Versions/A/NsuratorPlayerCoreFFmpegRuntime",
+      "binarySHA256": "d6fe5a3e987b20b6bd255f3940e747bacb9576c9b3e417824b46c8e5632c1cff",
+      "installName": "@rpath/NsuratorPlayerCoreFFmpegRuntime.framework/Versions/A/NsuratorPlayerCoreFFmpegRuntime",
+      "name": "NsuratorPlayerCoreFFmpegRuntime",
+      "record": "distribution/relink-materials-manifest/macosx-arm64-FRAMEWORK-RECORD.json",
+      "relativePath": "frameworks/macosx-arm64/NsuratorPlayerCoreFFmpegRuntime.framework",
+      "slice": "macosx-arm64",
+      "uuid": "58BB2D7D-52C4-3BC0-9CD2-5C811162D69A"
+    }
+  ],
+  "schemaVersion": 1,
+  "sourceArchives": [
+    {
+      "component": "libbluray",
+      "relativePath": "distribution/source-offer/sources/libbluray-1.4.1.tar.gz",
+      "sha256": "e22381a313a231d94ddf9180564b36d803f33bdfc7c0b53c03868bc43e5d163d",
+      "upstreamURL": "https://code.videolan.org/videolan/libbluray/-/archive/1.4.1/libbluray-1.4.1.tar.gz",
+      "version": "1.4.1"
+    },
+    {
+      "component": "dav1d",
+      "relativePath": "distribution/source-offer/sources/dav1d-1.5.3.tar.gz",
+      "sha256": "cbe212b02faf8c6eed5b6d55ef8a6e363aaab83f15112e960701a9c3df813686",
+      "upstreamURL": "https://code.videolan.org/videolan/dav1d/-/archive/1.5.3/dav1d-1.5.3.tar.gz",
+      "version": "1.5.3"
+    },
+    {
+      "component": "FFmpeg",
+      "relativePath": "distribution/source-offer/sources/ffmpeg-8.1.2.tar.xz",
+      "sha256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c",
+      "upstreamURL": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz",
+      "version": "8.1.2"
+    },
+    {
+      "component": "libudfread",
+      "relativePath": "distribution/source-offer/sources/libudfread-1.2.0.tar.gz",
+      "sha256": "adcce1190925f9d35a477757c5e3f0e221315d14d3d45b4ae62540ea0925f877",
+      "upstreamURL": "https://code.videolan.org/videolan/libudfread/-/archive/1.2.0/libudfread-1.2.0.tar.gz",
+      "version": "1.2.0"
+    }
+  ],
+  "staticLibraries": [
+    {
+      "relativePath": "install/macosx-arm64/lib/libavcodec.a",
+      "sha256": "d92be477f17fc8c52e51c3628ee161d02851141991267a1be7bae4d775f1b338"
+    },
+    {
+      "relativePath": "install/macosx-arm64/lib/libavfilter.a",
+      "sha256": "b0a527e79bb59444f6e06d78818c6869ff08688f7a20d4f23dc0b67ecc245274"
+    },
+    {
+      "relativePath": "install/macosx-arm64/lib/libavformat.a",
+      "sha256": "12283b83ff8500edea2f39824d69f230e383166f287be79d4236886ddebafd2d"
+    },
+    {
+      "relativePath": "install/macosx-arm64/lib/libavutil.a",
+      "sha256": "ced8cb36d068d4b95eda72b31bccc56678a0cfe86642d1b2c49ab1b86e666caf"
+    },
+    {
+      "relativePath": "install/macosx-arm64/lib/libswresample.a",
+      "sha256": "1c0c674eb1fc9b7c5f2f10448069e67b6f10213587264989ad6281d4493dcab0"
+    },
+    {
+      "relativePath": "install/macosx-arm64/lib/libswscale.a",
+      "sha256": "1a46ce102e3530ee3b33f22175fb6fc63ca1f6d440587877764d88d48e42eb78"
+    },
+    {
+      "relativePath": "dependencies/macosx-arm64/lib/libbluray.a",
+      "sha256": "cfced98757c3508edfee3408b0148a5fa9df36ed4455e843b6b19e940843909a"
+    },
+    {
+      "relativePath": "dependencies/macosx-arm64/lib/libdav1d.a",
+      "sha256": "459048e458a2cb875590a925c8f62c2540d397ac358f727a91ba418cbb0de61a"
+    }
+  ],
+  "swiftpmLinkMode": "framework"
+}

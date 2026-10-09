@@ -1,0 +1,15 @@
+diff --git a/libavformat/aviobuf.c b/libavformat/aviobuf.c
+--- a/libavformat/aviobuf.c
++++ b/libavformat/aviobuf.c
+@@ -2,6 +2,10 @@ int ffio_copy_url_options(AVIOContext* pb, AVDictionary** avio_opts)
+ {
+     const char *opts[] = {
+-        "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy", NULL };
++        "ca_file", "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy",
++        "max_redirects", "reconnect", "reconnect_at_eof", "reconnect_delay_max",
++        "reconnect_delay_total_max", "reconnect_max_retries", "reconnect_on_http_error",
++        "reconnect_on_network_error", "reconnect_streamed", "respect_retry_after",
++        "short_seek_size", "tls_verify", NULL };
+     const char **opt = opts;
+     uint8_t *buf = NULL;
+     int ret = 0;

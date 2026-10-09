@@ -1,0 +1,19 @@
+diff --git a/libavformat/matroskadec.c b/libavformat/matroskadec.c
+--- a/libavformat/matroskadec.c
++++ b/libavformat/matroskadec.c
+@@ -4328,9 +4328,14 @@ static int matroska_read_packet(AVFormatContext *s, AVPacket *pkt)
+     }
+ 
+     while (matroska_deliver_packet(matroska, pkt)) {
++        int parse_result;
++
+         if (matroska->done)
+             return (ret < 0) ? ret : AVERROR_EOF;
+-        if (matroska_parse_cluster(matroska) < 0 && !matroska->done)
++        parse_result = matroska_parse_cluster(matroska);
++        if (parse_result == AVERROR_EXIT)
++            return parse_result;
++        if (parse_result < 0 && !matroska->done)
+             ret = matroska_resync(matroska, matroska->resync_pos);
+     }
+ 

@@ -1,0 +1,29 @@
+{
+  "architecture": "arm64",
+  "archiveName": "nsurator-player-core-ffmpeg-macosx-arm64-2026.10.09.1.tar.gz",
+  "archiveSHA256": "7baf2cc7582042bcaaddae77fd222c7946a076d41e48616fc0c603d10e02a79d",
+  "archiveURL": "https://github.com/imranulhSH/nsurator-macos-native/releases/download/nsurator-player-core-ffmpeg-2026.10.09.1/nsurator-player-core-ffmpeg-macosx-arm64-2026.10.09.1.tar.gz",
+  "artifactVersion": "2026.10.09.1",
+  "linkProfile": "base",
+  "manifestRelativePath": "nsurator-player-core-ffmpeg-apple-manifest.json",
+  "manifestSHA256": "b5b4c869ddad235e09bd21a965ed19f07a76f47970fb77b3d512620fa7a0392a",
+  "minimumMacOSVersion": "14.0",
+  "packageRevision": "ebfc8a0f3dbb3d054a1054d8c530fa91d4e78d39",
+  "platform": "macosx",
+  "releaseRepository": "imranulhSH/nsurator-macos-native",
+  "releaseTag": "nsurator-player-core-ffmpeg-2026.10.09.1",
+  "requiredRuntimeLibraries": [
+    "libbluray",
+    "libdav1d"
+  ],
+  "runtimeFramework": {
+    "binarySHA256": "d6fe5a3e987b20b6bd255f3940e747bacb9576c9b3e417824b46c8e5632c1cff",
+    "installName": "@rpath/NsuratorPlayerCoreFFmpegRuntime.framework/Versions/A/NsuratorPlayerCoreFFmpegRuntime",
+    "name": "NsuratorPlayerCoreFFmpegRuntime",
+    "relativePath": "frameworks/macosx-arm64/NsuratorPlayerCoreFFmpegRuntime.framework",
+    "uuid": "58BB2D7D-52C4-3BC0-9CD2-5C811162D69A"
+  },
+  "schemaVersion": 1,
+  "sliceName": "macosx-arm64",
+  "swiftpmLinkMode": "framework"
+}

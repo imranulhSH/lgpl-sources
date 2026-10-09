@@ -6,7 +6,10 @@ The patches are in `patches/`. They apply, in numeric order, with
 `patch -p1` from the top of an AMSMB2 tree whose `Dependencies/libsmb2`
 directory holds libsmb2 (AMSMB2 pins libsmb2 there as a git submodule). The
 patches are distributed under the licence of the library they change
-(LGPL-2.1-or-later; see `amsmb2/LICENSE` and `libsmb2/COPYING`).
+(LGPL-2.1-or-later; see `amsmb2/LICENSE` and `libsmb2/COPYING`), with one
+exception: the new file `AMSMB2/ReadOnlyFile.swift` that patch 0002 adds is
+MIT, as its first line says, like AMSMB2's own Swift sources. It is
+distributed as part of the AMSMB2 framework, which as a whole is LGPL-2.1.
 
 | # | Patch | Files changed | Date | What it changes |
 |---|---|---|---|---|

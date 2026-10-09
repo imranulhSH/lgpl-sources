@@ -24,6 +24,13 @@ changes to it, or what is needed to rebuild it.
 Each folder's README gives the exact source pins, the configure flags, how to
 rebuild, how to replace the library in the app, and anything we could not pin.
 
+A release covers only the libraries in its own row. The "App builds" column
+says which builds contain those libraries. Mac builds made from 2026-08-11 to
+2026-09-23, for example, contain the ffmpeg/ffprobe tools covered here, but
+their player libraries came from earlier library builds that no release in
+this repository covers. Builds made before the dates in the table are not
+covered either.
+
 ## Getting the source
 
 Open the release for your app build on the
@@ -98,8 +105,20 @@ groups tied to the developer's team) may not work in that copy.
 Each component folder has the licence texts from that component's own source
 (for example `ffmpeg/COPYING.LGPLv2.1`). Our patches change LGPL-2.1-or-later
 libraries and are distributed under the same licence as the library they
-change. Each patched component has a `CHANGES.md` that lists the files we
-changed and when.
+change, unless the patch itself says otherwise (one AMSMB2 patch adds a Swift
+file under MIT, like AMSMB2's own Swift files; see that folder's
+`CHANGES.md`). Each patched component has a `CHANGES.md` that lists the files
+we changed and when. The changed source files do not carry dated notices of
+their own: so that the patches stay exactly as they were built, the dated
+notice for every changed file is in its component's `CHANGES.md`.
+
+The files we wrote ourselves (the build scripts and build records copied from
+our repositories, the READMEs and the change notices) are licensed under the
+GNU Lesser General Public License, version 2.1 or (at your option) any later
+version, the same licence as the libraries they build. The text is in
+[`LICENSE`](LICENSE). Files that state their own licence keep it, and the
+third-party files here (licence texts, upstream build manifests) keep the
+licence of the project they come from.
 
 ## Contact
 
@@ -127,6 +146,11 @@ Nsurator 应用本身不开源，其源代码不在这里。本仓库只包含�
 
 每个目录的 README 写明了确切的源码版本与哈希、配置参数、重新构建和替换的方法，
 以及无法锁定的部分。
+
+每个 Release 只覆盖它那一行列出的库；“应用版本”一列说明哪些构建包含这些库。例如
+2026-08-11 至 2026-09-23 之间的 Mac 构建包含这里覆盖的 ffmpeg / ffprobe 工具，
+但它们的播放核心库来自更早的库构建，本仓库没有对应的 Release。早于表中日期的
+构建同样不在覆盖范围内。
 
 ### 获取源码
 
@@ -162,8 +186,16 @@ FFmpeg 视为 GPL 的库；应用使用的是 `base` 配置，本仓库的说明
 ### 许可证
 
 各组件目录中有该组件源码自带的许可证全文。我们的补丁修改的是 LGPL-2.1-or-later
-的库，按所修改的库的同一许可证分发。每个被修改的组件都有 `CHANGES.md`，列出修改
-过的文件和日期。
+的库，按所修改的库的同一许可证分发；补丁本身另有声明的除外（AMSMB2 的一个补丁
+新增的 Swift 文件与 AMSMB2 自己的 Swift 文件一样采用 MIT，见该目录的
+`CHANGES.md`）。每个被修改的组件都有 `CHANGES.md`，列出修改过的文件和日期。为了让
+补丁与实际构建时完全一致，被修改的源文件里没有另加带日期的说明，每个文件的修改
+说明和日期都写在所属组件的 `CHANGES.md` 中。
+
+我们自己编写的文件（从我们仓库复制的构建脚本和构建记录、各 README 和修改说明）
+按 GNU 宽通用公共许可证 2.1 版或（由你选择）任何更新版本授权，与它们所构建的库
+相同，全文见 [`LICENSE`](LICENSE)。文件中自带许可声明的以其声明为准；第三方文件
+（许可证全文、上游构建清单）沿用其来源项目的许可证。
 
 ### 联系方式
 

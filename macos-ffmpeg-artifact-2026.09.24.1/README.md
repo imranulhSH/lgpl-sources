@@ -77,7 +77,18 @@ they could not be downloaded again. Use the copies attached to the release.
 You need a Mac with Xcode (the artifact used the MacOSX 27.0 SDK), meson,
 ninja and pkg-config.
 
-1. Unpack `macos-ffmpeg-artifact-2026.09.24.1-patched-sources.tar.xz`. It holds
+The commands below expect the scripts (`build/`) and the patched sources
+(`sources/`) side by side in one directory, and are run from that directory.
+Unpack both release assets into one new, empty directory, dropping each
+archive's top-level folder:
+
+```sh
+mkdir /absolute/path/without/spaces/tree && cd /absolute/path/without/spaces/tree
+tar -xzf /path/to/macos-ffmpeg-artifact-2026.09.24.1-build-scripts-and-records.tar.gz --strip-components=1
+tar -xJf /path/to/macos-ffmpeg-artifact-2026.09.24.1-patched-sources.tar.xz --strip-components=1
+```
+
+1. The patched-sources archive (`macos-ffmpeg-artifact-2026.09.24.1-patched-sources.tar.xz`) holds
    `sources/ffmpeg-8.1.2`, `sources/libbluray-1.4.1` (with libudfread already
    in `contrib/libudfread`), `sources/libudfread-1.2.0` and
    `sources/dav1d-1.5.3`, with our patches applied. Or unpack the upstream
@@ -149,7 +160,8 @@ to the developer's team) may not work in that copy.
 - 我们改过 FFmpeg（7 个补丁，其中只有 `aviobuf.c`、`matroskadec.c` 的修改会被编译，
   因为构建用了 `--disable-network`）和 libbluray（3 个补丁）。修改说明和日期见
   `ffmpeg/CHANGES.md`、`libbluray/CHANGES.md`。
-- 重新构建：解开补丁后的源码包，按上面的命令运行
+- 重新构建：把构建脚本包和补丁后的源码包都用 `--strip-components=1` 解到同一个新的
+  空目录（路径不含空格），在该目录中按上面的命令运行
   `build/nsurator-player-core/scripts/build-ffmpeg-apple.sh` 三次；必须保持 `base`
   链接配置。
 - 替换：由于是静态链接，需要用应用自己的目标文件重新链接这两个可执行文件。

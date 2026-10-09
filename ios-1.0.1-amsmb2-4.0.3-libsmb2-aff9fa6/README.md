@@ -36,7 +36,7 @@ build does not use (see `CHANGES.md`).
 
 | Path | What it is |
 |---|---|
-| `patches/` | Our three patches, numbered in the order they apply |
+| `patches/` | Our three patches, numbered in the order they apply. They are LGPL-2.1-or-later, except the new Swift file that 0002 adds, which is MIT like AMSMB2's own Swift files (see `CHANGES.md`) |
 | `CHANGES.md` | Dated change notices |
 | `amsmb2/LICENSE`, `libsmb2/COPYING`, `libsmb2/LICENCE-LGPL-2.1.txt` | Licence texts from the upstream sources |
 | `build/Package.swift`, `build/Package@swift-6.0.swift` | The SwiftPM manifests the app builds with. They are upstream's, unchanged. |
@@ -97,7 +97,10 @@ install yourself.
 - 框架包含 libsmb2（LGPL-2.1-or-later）和 AMSMB2 Swift 封装（上游说明整体按
   LGPL-2.1 处理）。上游版本：AMSMB2 提交 `1726aaa`（4.0.3），libsmb2 提交 `aff9fa6`。
 - 我们的 3 个补丁和新增的两个测试程序见 `patches/` 与 `CHANGES.md`。上游加补丁后的
-  源码树与应用实际编译的副本逐文件比对一致。
+  源码树与应用实际编译的副本逐文件比对一致。补丁 0002 新增的
+  `AMSMB2/ReadOnlyFile.swift` 与 AMSMB2 自己的 Swift 文件一样采用 MIT，作为整体按
+  LGPL-2.1 分发的 AMSMB2 框架的一部分发布；其余补丁按所修改的库的许可证
+  （LGPL-2.1-or-later）分发。
 - 替换：做一个同名、同 install name、提供 `records/app-imports-from-AMSMB2.txt`
   中全部符号的动态框架（Swift 公开接口和类型布局需保持一致，最好用同一版本的
   Swift 编译器），放进应用并用你自己的证书和描述文件重新签名安装。App Store 安装

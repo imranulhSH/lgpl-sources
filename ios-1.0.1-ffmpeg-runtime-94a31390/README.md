@@ -90,7 +90,10 @@ then `stage-ios-ffmpeg-candidate.py` links the framework and writes an
 XCFramework candidate and an audit report.
 
 To build from the release assets instead of downloading, unpack
-`ios-1.0.1-ffmpeg-runtime-94a31390-patched-sources.tar.xz`, point
+`ios-1.0.1-ffmpeg-runtime-94a31390-build-scripts-and-records.tar.gz` and
+`ios-1.0.1-ffmpeg-runtime-94a31390-patched-sources.tar.xz` into one new,
+empty directory with `--strip-components=1` (so that `build/` and `sources/`
+sit side by side), point
 `FFMPEG_SOURCE_DIR`, `LIBBLURAY_SOURCE_DIR` and `DAV1D_SOURCE_DIR` at the
 unpacked `sources/ffmpeg-8.1`, `sources/libbluray` and `sources/dav1d-1.5.4`,
 set the other variables the way `rebuild-ios-ffmpeg-runtime.sh` sets them,
@@ -100,8 +103,14 @@ Always set `VISION_PLAYER_CORE_FFMPEG_LINK_PROFILE=base`, as the rebuild
 script does. The scripts' default profile (`full`) adds DVD libraries that
 FFmpeg treats as GPL; that profile was not used for the app.
 
-A rebuild may not reproduce the binary hash exactly. See "What we could not
-pin" below.
+A rebuild does not reproduce the binary hash exactly, because the build
+directory paths are compiled into the binary. On 2026-10-09 the framework was
+rebuilt from the release assets this way (iPhoneOS 27.0 SDK, Apple clang
+21.0.0) and compared with the shipped device slice: the exported symbol set
+and the size of the machine code (`__TEXT,__text`) are identical, and the
+only differing instructions are address computations (`adrp`, `add` and
+load or store offsets) that moved because the embedded path strings have
+different lengths.
 
 ## Replacing the framework in the app
 
@@ -142,6 +151,8 @@ to sign and install yourself.
   binary (2026-09-30); a later commit that day changed only the privacy
   manifest check in `audit-ios-ffmpeg-runtime.py` and the lock's manifest
   hashes.
+- The rebuild described under "Rebuilding" nevertheless matches the shipped
+  binary apart from the embedded build paths and the addresses they shift.
 - All four sources are pinned exactly (archive hash or git commit), and the
   patches match the hashes recorded at build time
   (`BuildProvenance/ffmpeg-patch-sha256.txt`, and the libbluray patch hash in
@@ -165,5 +176,7 @@ FFmpeg 8.1、libbluray 1.4.1、libudfread（1.2.0 之后 3 个提交）和 dav1d
   放进应用的 `Frameworks/`，再用你自己的证书和包含你设备的描述文件重新签名安装。
   iOS 只运行 Apple 或开发者证书签名的代码，App Store 安装的副本经过加密和 Apple 签名，
   因此无法在未改动的设备上替换 App Store 安装里的框架。
-- 无法完全锁定的部分：当时的两个临时构建目录、构建日志和 meson 配置记录已不存在；
-  重新构建的二进制哈希可能与发布版不同。
+- 无法完全锁定的部分：当时的两个临时构建目录、构建日志和 meson 配置记录已不存在。
+  2026-10-09 用 Release 附件重新构建并与发布版比对：导出符号集合和机器码大小完全
+  一致，不同之处只有因编译进二进制的构建路径长度不同而改变的地址计算指令，因此
+  二进制哈希不同。

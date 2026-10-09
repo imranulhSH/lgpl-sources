@@ -1,6 +1,7 @@
-d49871f9863503933722c376e5dd4b37db5866997c34478a67f7a408626f9184  README.md
-1b55924c9886c5be73a47e16d931f50a8b82b6d4047a0aa6aa996bd51b569360  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/CHANGES.md
-cb4847f7409e0818c522d980dd8f9bb72b6137a5a7a0b82ca09b39b6ff90c6a6  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/README.md
+246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30  LICENSE
+283816a7edc52ab407596da39c0708ef1cdb5a4447c200d5d1c1014acc76a5d1  README.md
+e9c85d43804734608fbe8f4739c2ddaeaab1e0329bd90c5a064c0b8229327e4b  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/CHANGES.md
+66698339a36a34eb64b7f814c45aaf9f2420e4038d42078ced31e3d3c56288d6  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/README.md
 20c17d8b8c48a600800dfd14f95d5cb9ff47066a9641ddeab48dc54aec96e331  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/amsmb2/LICENSE
 7d5b6340d40dcf7e9a43e0e5da3893241b3a2fa841b365a2656755c71821ad6a  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/build/Package.swift
 d7eeaa4f671f2963cecba57a1ef3d258d57efdfe1ec7c9727a4c21f08c474ffe  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/build/Package@swift-6.0.swift
@@ -12,8 +13,8 @@ dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551  ios-1.0.1-amsm
 4584d10141466adc70b0321b9ac86def70e11f93ac4e53656e14c539838a0aec  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/patches/0002-persistent-read-only-handle.patch
 39e02de2b796eb4f1cf867aa9a236c89ea0df15ab64ec1277ec1d1ad967199f0  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/patches/0003-disconnect-completion-and-status.patch
 534fe69eb76428d70898cc30f17aacbf13544a9381e985745f531fe14757d3e9  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/records/app-imports-from-AMSMB2.txt
-c0b55cb610f29ebe49dd0ad4032d8be28a2e84b82272ffc3a63ab58fb7b58f1c  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/release-assets.sha256
-e87cd1409762cdd37a3de5b6d760175b6f7c165c02188bec74047b6befd92eb9  ios-1.0.1-ffmpeg-runtime-94a31390/README.md
+f7954d8c44733f0f8908bef0ff3dcdc2b8d94779a637b41300a8f2f613b34ab4  ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/release-assets.sha256
+f145e3c3f406c67717d4ff991add24d4593e4a1fdcd2aa794d9494881bfa9728  ios-1.0.1-ffmpeg-runtime-94a31390/README.md
 e645acbf03bd21d6449f3caccf25cd9f8fef6464596b58a73162ce830fe2ed30  ios-1.0.1-ffmpeg-runtime-94a31390/build/Packages/vision-player-core/Artifacts/BUILD-PROVENANCE.md
 5ba1d254666fc6c21069cb4393b29b4563f512c1c1c11473b9b97bc1c6d965b8  ios-1.0.1-ffmpeg-runtime-94a31390/build/Packages/vision-player-core/Artifacts/BuildProvenance/dav1d-source.json
 5d409828a20c3cdc521ce721e01b00c4ed46dff35217d8ca44a3660b5f1a77f8  ios-1.0.1-ffmpeg-runtime-94a31390/build/Packages/vision-player-core/Artifacts/BuildProvenance/ffmpeg-hls-child-network-options.patch
@@ -67,8 +68,8 @@ d192c785bed4b6968ed2391ac109d01b34da42e6cbcb407ced7783e7bbea5ab6  ios-1.0.1-ffmp
 dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551  ios-1.0.1-ffmpeg-runtime-94a31390/libudfread/COPYING
 a986a6ea05dbc80af026672da88aec4f46402d0676fa5802e5d8ba84d09f5414  ios-1.0.1-ffmpeg-runtime-94a31390/libudfread/README.md
 1e2bbc82e749c422e8d3c189cd963857d7fb219a9e3c59ce160d2b10cc0cfe22  ios-1.0.1-ffmpeg-runtime-94a31390/records/app-imports-from-VisionPlayerCoreFFmpegRuntime.txt
-3bc8d3120cf5b96d51e3a277732d15787b3972972ecdce4e608275cc88eb5989  ios-1.0.1-ffmpeg-runtime-94a31390/release-assets.sha256
-f07e5ec02f09e4f66af2f027413edd025116db36a6e89837700c5463a690c07d  macos-ffmpeg-artifact-2026.09.24.1/README.md
+b5b44726f037b154fac0716e2be2cb877f85c9a586b9d000cbfeac1510461e2b  ios-1.0.1-ffmpeg-runtime-94a31390/release-assets.sha256
+381e0ff4b21dd65436a6d29ec10fda4a1be6db9e25ae6ead9201bdcf84c4fffb  macos-ffmpeg-artifact-2026.09.24.1/README.md
 fd1d7b43b14f84a2d3da85d3ed421d8d5555f14e161bae8e6bd2e835081488d2  macos-ffmpeg-artifact-2026.09.24.1/build/nsurator-macos-native/Config/nsurator-player-core-ffmpeg-artifact.lock.json
 ae9aab432f7cfe332c2050c0cd13f7826639d808a83868061953f722611f3a34  macos-ffmpeg-artifact-2026.09.24.1/build/nsurator-macos-native/Config/nsurator-player-core-ffmpeg-sources.json
 cfd152f7ca075ce6da0bc35abdca0416723eced4877b45bce7abfa52e60def43  macos-ffmpeg-artifact-2026.09.24.1/build/nsurator-macos-native/script/build_nsurator_player_core_ffmpeg_artifact.sh
@@ -120,8 +121,8 @@ dd92c3c2247c5651606fc23a5e2d6a1ebc5ace9a3e49cbde0e12f05ad1cb1ee5  macos-ffmpeg-a
 b3aa400aca6d2ba1f0bd03bd98d03d1fe7489a3bbb26969d72016360af8a5c9d  macos-ffmpeg-artifact-2026.09.24.1/records/artifact/licenses/libbluray-COPYING
 dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551  macos-ffmpeg-artifact-2026.09.24.1/records/artifact/licenses/libudfread-COPYING
 78d8c64300a35efa16a630eda78a808600aeb39b61a9c52a5399b78c6d1f000d  macos-ffmpeg-artifact-2026.09.24.1/records/artifact/nsurator-player-core-ffmpeg-apple-manifest.json
-a7093262bc42bc9c290481fbc235087239911a9a7fdfd3da6e0cb1e4d456f912  macos-ffmpeg-artifact-2026.09.24.1/release-assets.sha256
-8d3c21f1fd68d1600cc8ede340bfcba4e2ecc0fbb3cfcbc2942c4a6ec7e1d382  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/README.md
+1cae6c709e35c459ac2b590964f2203693426a8d6f1b5909819a2f82391af200  macos-ffmpeg-artifact-2026.09.24.1/release-assets.sha256
+615752184b4f4e7758f989520babb1ffca98672e406feccd3a027525d3945d24  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/README.md
 1e2fd7bb71eddd620466bc518dbf5702ea7e5ca9f11f0f28503c022c8846d154  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/build/Config/media-tools-artifact.lock.json
 9eebeee67657ea9d3775891a0a428f3a82ccad4f06afc357f6e110ae4457416d  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/build/Config/media-tools-sources.json
 de29a13123d1f3396c50e9429b1ab97dfbcbe49d173cb3b7621c4f00b619fcd6  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/build/Sources/NsuratorNative/Resources/ThirdPartyPlayback/MEDIA-TOOLS-NOTICE.md
@@ -138,4 +139,4 @@ bdb0a645ea18c60507d0368379b1ac5474b92255fcc2d115e07486a7672ba526  macos-media-to
 618417696a4992bb58eb1aefd7cb2564f32c3aaee86f22659b49d9a33009d27c  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/records/build-configuration.txt
 18a013f30bf75cf949dbcb4f34c022cbd61433e6c16a48feca9c43336a291450  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/records/ffmpeg-buildconf.txt
 f42a92e0561342383066dcec56e45297215eb269985127fdb89e373bd4fc794c  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/records/ffmpeg-version.txt
-eb9d72da26981ee653f41b7bfa90032fdd191bf8900f83d88514cded307ae551  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/release-assets.sha256
+1d36a4dc7c81e9fdd0752d870d7273f406a04bcb4a413e9cbc838a2a3569d211  macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/release-assets.sha256

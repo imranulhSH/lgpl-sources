@@ -1,0 +1,145 @@
+--- a/libavformat/libssh.c
++++ b/libavformat/libssh.c
+@@ -42,4 +42,22 @@
+     char *priv_key;
++    char *npc_password;
++    char *npc_private_key_passphrase;
++    char *known_hosts;
++    int verify_host_key;
++    int reconnect_max_retries;
+ } LIBSSHContext;
+
++static void libssh_clear_secret(char **secret)
++{
++    if (secret && *secret) {
++        volatile unsigned char *cursor = (volatile unsigned char *)*secret;
++        size_t remaining = strlen(*secret);
++        while (remaining > 0) {
++            *cursor++ = 0;
++            remaining -= 1;
++        }
++        av_freep(secret);
++    }
++}
++
+ static av_cold int libssh_create_ssh_session(LIBSSHContext *libssh, const char* hostname, unsigned int port)
+@@ -64,2 +82,8 @@
+
++    if (libssh->known_hosts &&
++        ssh_options_set(libssh->session, SSH_OPTIONS_KNOWNHOSTS, libssh->known_hosts) != SSH_OK) {
++        av_log(libssh, AV_LOG_ERROR, "Could not configure the SSH known-hosts file.\n");
++        return AVERROR(EINVAL);
++    }
++
+     if (ssh_connect(libssh->session) != SSH_OK) {
+@@ -69,2 +93,7 @@
+
++    if (libssh->verify_host_key && ssh_session_is_known_server(libssh->session) != SSH_KNOWN_HOSTS_OK) {
++        av_log(libssh, AV_LOG_ERROR, "SSH server host-key verification failed.\n");
++        return AVERROR(EPERM);
++    }
++
+     return 0;
+@@ -76,2 +105,6 @@
+     int auth_methods;
++    const char *authentication_password = libssh->npc_password ? libssh->npc_password : password;
++    const char *private_key_passphrase = libssh->npc_private_key_passphrase
++        ? libssh->npc_private_key_passphrase
++        : password;
+
+@@ -88,4 +121,6 @@
+             ssh_key priv_key;
+-            if (ssh_pki_import_privkey_file(libssh->priv_key, password, NULL, NULL, &priv_key) == SSH_OK) {
+-                if (ssh_userauth_publickey(libssh->session, NULL, priv_key) == SSH_AUTH_SUCCESS) {
++            if (ssh_pki_import_privkey_file(libssh->priv_key, private_key_passphrase, NULL, NULL, &priv_key) == SSH_OK) {
++                int authentication_status = ssh_userauth_publickey(libssh->session, NULL, priv_key);
++                ssh_key_free(priv_key);
++                if (authentication_status == SSH_AUTH_SUCCESS) {
+                     av_log(libssh, AV_LOG_DEBUG, "Authentication successful with selected private key.\n");
+@@ -97,3 +132,3 @@
+             }
+-        } else if (ssh_userauth_publickey_auto(libssh->session, NULL, password) == SSH_AUTH_SUCCESS) {
++        } else if (ssh_userauth_publickey_auto(libssh->session, NULL, private_key_passphrase) == SSH_AUTH_SUCCESS) {
+             av_log(libssh, AV_LOG_DEBUG, "Authentication successful with auto selected key.\n");
+@@ -103,4 +138,4 @@
+
+-    if (!authorized && password && (auth_methods & SSH_AUTH_METHOD_PASSWORD)) {
+-        if (ssh_userauth_password(libssh->session, NULL, password) == SSH_AUTH_SUCCESS) {
++    if (!authorized && authentication_password && (auth_methods & SSH_AUTH_METHOD_PASSWORD)) {
++        if (ssh_userauth_password(libssh->session, NULL, authentication_password) == SSH_AUTH_SUCCESS) {
+             av_log(libssh, AV_LOG_DEBUG, "Authentication successful with password.\n");
+@@ -170,5 +205,4 @@
+
+-static av_cold int libssh_close(URLContext *h)
++static void libssh_close_connection(LIBSSHContext *libssh)
+ {
+-    LIBSSHContext *libssh = h->priv_data;
+     if (libssh->file) {
+@@ -186,2 +220,10 @@
+     }
++}
++
++static av_cold int libssh_close(URLContext *h)
++{
++    LIBSSHContext *libssh = h->priv_data;
++    libssh_clear_secret(&libssh->npc_password);
++    libssh_clear_secret(&libssh->npc_private_key_passphrase);
++    libssh_close_connection(libssh);
+     return 0;
+@@ -290,8 +332,44 @@
+     int bytes_read;
++    uint64_t read_offset = sftp_tell64(libssh->file);
+
+-    if ((bytes_read = sftp_read(libssh->file, buf, size)) < 0) {
+-        av_log(libssh, AV_LOG_ERROR, "Read error.\n");
+-        return AVERROR(EIO);
++    bytes_read = sftp_read(libssh->file, buf, size);
++    if (bytes_read >= 0)
++        return bytes_read ? bytes_read : AVERROR_EOF;
++
++    for (int attempt = 1; attempt <= libssh->reconnect_max_retries; attempt++) {
++        char path[MAX_URL_SIZE];
++        int ret;
++
++        if (ff_check_interrupt(&h->interrupt_callback))
++            return AVERROR_EXIT;
++
++        av_log(libssh, AV_LOG_WARNING,
++               "SFTP read failed; reconnecting at the prior offset (attempt %d of %d).\n",
++               attempt, libssh->reconnect_max_retries);
++        libssh_close_connection(libssh);
++        if ((ret = libssh_connect(h, h->filename, path, sizeof(path))) < 0)
++            goto reconnect_failed;
++        if ((ret = libssh_open_file(libssh, h->flags, path)) < 0)
++            goto reconnect_failed;
++        libssh_stat_file(libssh);
++        if (sftp_seek64(libssh->file, read_offset)) {
++            ret = AVERROR(EIO);
++            goto reconnect_failed;
++        }
++
++        bytes_read = sftp_read(libssh->file, buf, size);
++        if (bytes_read >= 0) {
++            av_log(libssh, AV_LOG_INFO, "SFTP read resumed after reconnect.\n");
++            return bytes_read ? bytes_read : AVERROR_EOF;
++        }
++        continue;
++
++reconnect_failed:
++        libssh_close_connection(libssh);
++        if (ret == AVERROR_EXIT)
++            return ret;
+     }
+-    return bytes_read ? bytes_read : AVERROR_EOF;
++
++    av_log(libssh, AV_LOG_ERROR, "SFTP read failed after bounded reconnect attempts.\n");
++    return AVERROR(EIO);
+ }
+@@ -479,2 +557,7 @@
+     {"private_key", "set path to private key", OFFSET(priv_key), AV_OPT_TYPE_STRING, { .str = NULL }, 0, 0, D|E },
++    {"npc_sftp_password", "set private SFTP password", OFFSET(npc_password), AV_OPT_TYPE_STRING, { .str = NULL }, 0, 0, D|E },
++    {"npc_sftp_private_key_passphrase", "set private SFTP private-key passphrase", OFFSET(npc_private_key_passphrase), AV_OPT_TYPE_STRING, { .str = NULL }, 0, 0, D|E },
++    {"known_hosts", "set path to SSH known-hosts file", OFFSET(known_hosts), AV_OPT_TYPE_STRING, { .str = NULL }, 0, 0, D|E },
++    {"verify_host_key", "require SSH server host-key verification", OFFSET(verify_host_key), AV_OPT_TYPE_BOOL, { .i64 = 1 }, 0, 1, D|E },
++    {"npc_sftp_reconnect_max_retries", "set bounded SFTP read reconnect attempts", OFFSET(reconnect_max_retries), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 3, D },
+     {NULL}

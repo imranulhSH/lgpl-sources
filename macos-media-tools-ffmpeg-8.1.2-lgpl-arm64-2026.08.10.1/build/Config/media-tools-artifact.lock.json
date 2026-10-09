@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 2,
+  "artifactVersion": "ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1",
+  "provider": "Nsurator source build",
+  "ffmpegVersion": "8.1.2",
+  "architecture": "arm64",
+  "minimumMacOSVersion": "14.0",
+  "licenseFamily": "LGPL-2.1-or-later",
+  "redistributionReviewRequired": false,
+  "sourceLock": "Config/media-tools-sources.json",
+  "sourceLockSHA256": "9eebeee67657ea9d3775891a0a428f3a82ccad4f06afc357f6e110ae4457416d",
+  "archiveName": "nsurator-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1.tar.gz",
+  "archiveSHA256": "78fc1db5d026cec733149fad4240656a18fbeb57b3604a0c0d116a810387c357",
+  "requiredFilters": [
+    "ass",
+    "overlay",
+    "subtitles"
+  ],
+  "requiredEncoders": [
+    "aac",
+    "gif",
+    "h264_videotoolbox",
+    "mjpeg",
+    "png"
+  ],
+  "forbiddenEncoders": [
+    "libx264",
+    "libx265"
+  ],
+  "forbiddenConfigureFlags": [
+    "--enable-gpl",
+    "--enable-libx264",
+    "--enable-libx265",
+    "--enable-nonfree"
+  ],
+  "requiredConfigureFlags": [
+    "--disable-gpl",
+    "--disable-nonfree",
+    "--enable-libass",
+    "--enable-videotoolbox"
+  ],
+  "tools": {
+    "ffmpeg": {
+      "binarySHA256": "7d8bba6092f12288dd84d634f42d47104192ad3173bbc70e5fea07cac4de4e59"
+    },
+    "ffprobe": {
+      "binarySHA256": "ce412ad1c9a26621577eb168222193dafeeff370386544958abf7c00bd0a30d2"
+    }
+  }
+}

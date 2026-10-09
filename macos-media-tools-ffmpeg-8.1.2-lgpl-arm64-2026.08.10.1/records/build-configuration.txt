@@ -1,0 +1,8 @@
+FFmpeg configure flags:
+  --prefix=/tmp/nsurator-media-tools-artifact.o4Uz8a/prefix  --arch=arm64  --cc=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang  --cxx=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++  --extra-cflags=-O2\ -arch\ arm64\ -isysroot\ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk\ -mmacosx-version-min=14.0\ -I/tmp/nsurator-media-tools-artifact.o4Uz8a/prefix/include  --extra-cxxflags=-O2\ -arch\ arm64\ -isysroot\ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk\ -mmacosx-version-min=14.0\ -I/tmp/nsurator-media-tools-artifact.o4Uz8a/prefix/include  --extra-ldflags=-arch\ arm64\ -isysroot\ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk\ -mmacosx-version-min=14.0\ -L/tmp/nsurator-media-tools-artifact.o4Uz8a/prefix/lib  --extra-libs=-lc++  --pkg-config-flags=--static  --disable-debug  --disable-doc  --disable-ffplay  --disable-gpl  --disable-nonfree  --disable-shared  --enable-audiotoolbox  --enable-libass  --enable-pic  --enable-securetransport  --enable-static  --enable-videotoolbox
+
+Compiler:
+Apple clang version 21.0.0 (clang-2100.1.1.101)
+
+SDK:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk

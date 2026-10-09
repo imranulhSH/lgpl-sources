@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "vendorDate": "2026-10-01",
+  "upstreamURL": "https://github.com/amosavian/AMSMB2",
+  "revision": "1726aaaf7adf63d7d1d2a0c5d1b0e635028215c0",
+  "libsmb2URL": "https://github.com/sahlberg/libsmb2",
+  "libsmb2Revision": "aff9fa6ba9f41cfd3c15d184554601ec3f6d8d03",
+  "sourceMode": "source-built SwiftPM targets; original Package manifests retained",
+  "modifiedFiles": [
+    {
+      "path": "Dependencies/libsmb2/include/libsmb2-private.h",
+      "upstreamSHA256": "dcaac037828cb66d8321258d002d42c6abfda29339c71b0edf0ab31b053b192f",
+      "modifiedSHA256": "254449d6e42e72b8c6eba736bde8e62ad042c697e1735acb8acbbcf03329f198"
+    },
+    {
+      "path": "Dependencies/libsmb2/lib/init.c",
+      "upstreamSHA256": "67ce2cc15715caafa7589e9129597f89d8477ccb93eb154ba99d341d8ec71f4b",
+      "modifiedSHA256": "fc862d0d08f7ccd0f97ab3bf74fefd01b55c39c78f0a78b03b07e9a5e9d1ea48"
+    },
+    {
+      "path": "Dependencies/libsmb2/lib/libsmb2.c",
+      "upstreamSHA256": "ce5e84d3f41f78b153c4d13ce5543176789db326eca7ed380f1ec9fe7dd23cab",
+      "modifiedSHA256": "4133fc540bcf1c0bef254dc0a11d8375968e1c11e9d2eb621206ca0c6c23db21"
+    },
+    {
+      "path": "Dependencies/libsmb2/lib/pdu.c",
+      "upstreamSHA256": "d7f9a5d07a369a90d7faad11f1458dcf6921c0c171d96e541a83ee8cbdc84781",
+      "modifiedSHA256": "d6a011c69a974b275b80db1d683169841edbfd2318a6eb5536a4033f64564dba"
+    },
+    {
+      "path": "AMSMB2/AMSMB2.swift",
+      "upstreamSHA256": "b1abc0120d57d5cb46a6eb36eb223259e55b68b5e239c1c86e92bc4547d6a6b2",
+      "modifiedSHA256": "ef4e423b91948f7e951e7225f6e648532986e0d14c557c1e0f9bf5602c71e81c"
+    },
+    {
+      "path": "AMSMB2/ReadOnlyFile.swift",
+      "upstreamSHA256": null,
+      "modifiedSHA256": "7939e8564874492944004addefe199f18fa8825e21718b3f192be800c163e9cc",
+      "changeKind": "added"
+    },
+    {
+      "path": "Dependencies/libsmb2/lib/socket.c",
+      "upstreamSHA256": "a926a0b54d8380a4bcf2e37e5ada892912a7b78ae6d3cba43ef781332710ac6d",
+      "modifiedSHA256": "0186015ef86cd03d2f7cfa35cfb23612f92bcff25dca88aca8022e34aba1fa47"
+    }
+  ],
+  "unchangedBuildManifests": [
+    {
+      "path": "Package.swift",
+      "sha256": "7d5b6340d40dcf7e9a43e0e5da3893241b3a2fa841b365a2656755c71821ad6a"
+    },
+    {
+      "path": "Package@swift-6.0.swift",
+      "sha256": "d7eeaa4f671f2963cecba57a1ef3d258d57efdfe1ec7c9727a4c21f08c474ffe"
+    }
+  ],
+  "patch": {
+    "path": "patches/0001-client-guest-session-signing.patch",
+    "sha256": "348187677b168005135f276190b5a456e9f0d7df9e85b97fee69614a331d414f"
+  },
+  "addedTests": [
+    {
+      "path": "Dependencies/libsmb2/tests/guest-session-policy.c",
+      "sha256": "de7af91537ab5f8b23d15eaaea51ac7f0da70cb24b391bb09420425876022be6"
+    },
+    {
+      "path": "Dependencies/libsmb2/tests/disconnect-lifecycle.c",
+      "sha256": "69719d7a556087abf90fca93f961bc523ac3acccf68b159f5dc78ed2916dcb87"
+    }
+  ],
+  "licenses": [
+    {
+      "path": "LICENSE",
+      "sha256": "20c17d8b8c48a600800dfd14f95d5cb9ff47066a9641ddeab48dc54aec96e331"
+    },
+    {
+      "path": "Dependencies/libsmb2/COPYING",
+      "sha256": "749c710c2b3d5c95906c785f28af9abbe4ce909311e72eb72eee5c6873e2fa6f"
+    },
+    {
+      "path": "Dependencies/libsmb2/LICENCE-LGPL-2.1.txt",
+      "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551"
+    }
+  ],
+  "excludedCopyEntries": [
+    ".git",
+    ".build",
+    ".swiftpm",
+    ".DS_Store"
+  ],
+  "validationStatus": "reset_guard_c_local_samba_and_physical_guest_streaming_verified",
+  "swiftCallbackChanges": true,
+  "validationEvidence": {
+    "currentCPolicy": {
+      "result": ".artifacts/smb-guest-c-policy-20261001-r2/result.json",
+      "status": "passed",
+      "regressionBeforeFix": ".artifacts/smb-guest-c-policy-20261001-r2/before-result.json"
+    },
+    "currentLocalSamba": {
+      "result": ".artifacts/smb-guest-regression-guard-20261001-r3/run.json",
+      "status": "passed",
+      "tests": 7
+    },
+    "priorPhysicalConnection": {
+      "result": ".artifacts/physical-ipad-debug-20261001-r4/test-run.json",
+      "status": "passed_before_reset_guard",
+      "scope": "Physical iPad Guest connection and directory access; not final rendered playback acceptance"
+    },
+    "currentPhysicalConnection": {
+      "result": ".artifacts/physical-ipad-debug-20261001-r9/run.json",
+      "status": "passed",
+      "scope": "Current source guard: real iPad Guest directory/read/seek and rendered output for one MKV. Broader player regressions are tracked separately."
+    }
+  },
+  "additionalPatches": [
+    {
+      "path": "patches/0002-persistent-read-only-handle.patch",
+      "sha256": "4584d10141466adc70b0321b9ac86def70e11f93ac4e53656e14c539838a0aec"
+    },
+    {
+      "path": "patches/0003-disconnect-completion-and-status.patch",
+      "sha256": "39e02de2b796eb4f1cf867aa9a236c89ea0df15ab64ec1277ec1d1ad967199f0"
+    }
+  ],
+  "persistentReadOnlyHandle": {
+    "description": "Bounded read-only pread handle on the existing authenticated session. Independent serial file queue; explicit close before session disconnect. Caller retains pre/post path stat and compares server document identifier; absent identity falls back to original per-range contents API. Guest/signing/encryption policy unchanged. Manager disconnect also drains registered path-stat/fallback operations via gracefully:true. Source close cancels active range progress flags before draining. Each wire READ is capped at 1 MiB even when the negotiated server limit is larger; a larger total range checks cancellation between chunks.",
+    "validationStatus": "host_lifecycle_local_samba_and_wire_cap_unit_passed",
+    "testEvidence": ".artifacts/smb-wire-cap-regression-20261001-r1/run.json",
+    "tests": "SMBWireChunkTests + SMBReadAheadTests + SMBPersistentConnectionTests + SMBLiveIntegrationTests"
+  },
+  "disconnectLifecycle": {
+    "description": "Stop the socket receive loop after a completed protocol callback deliberately closes its context. Preserve TREE_DISCONNECT and LOGOFF NTSTATUS errors through the existing errno callback instead of fabricating allocation failure or success. Guest/signing/encryption and stat access remain unchanged.",
+    "validationStatus": "integrated_sanitized_c_guest_policy_and_64_source_samba_contracts_passed",
+    "runner": {
+      "repositoryPath": "scripts/test-smb-disconnect.py",
+      "sha256": "f96c88f6a8a449aa68cf2ba6b5a1ff4aee08df3a3b8f377c1edf8a136b1fdf9e"
+    },
+    "cEvidence": ".artifacts/smb-disconnect-integrated-20261001-r1/report.json",
+    "sourceRegressionEvidence": ".artifacts/smb-disconnect-source-regression-20261001-r1/run.json",
+    "historicalCandidateEvidence": ".artifacts/smb-disconnect-callback-local-20261001-r4/report.json",
+    "scope": "C loopback socketpair contracts are not authentication, real NAS or physical-device acceptance.",
+    "validationSummary": {
+      "disconnectCases": 6,
+      "guestPolicyContract": "passed",
+      "sanitizers": [
+        "address",
+        "undefined"
+      ],
+      "sourceTestsPassed": 64,
+      "localSambaTestsPassed": 7,
+      "sourceTestsFailed": 0,
+      "sourceTestsSkipped": 0,
+      "changedInputs": [],
+      "physicalAcceptance": "pending separate root device/NAS verification"
+    }
+  }
+}

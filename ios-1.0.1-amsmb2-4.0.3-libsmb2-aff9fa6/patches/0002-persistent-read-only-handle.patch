@@ -1,0 +1,107 @@
+--- a/AMSMB2/AMSMB2.swift
++++ b/AMSMB2/AMSMB2.swift
+@@ -859,6 +859,20 @@
+         }
+     }
+ 
++    /// Opens an existing file for bounded random reads. The returned handle
++    /// has no write API and does not reconnect or change session policy.
++    /// Share access permits server-side replacement; callers must compare a
++    /// fresh path identity with attributes().documentIdentifierKey.
++    public func openReadOnlyFile(atPath path: String) async throws -> SMB2ReadOnlyFile {
++        try await withCheckedThrowingContinuation { continuation in
++            with(completionHandler: { continuation.resume(with: $0) }) { client in
++                let file = try SMB2FileHandle(path: path, desiredAccess: .read,
++                    shareAccess: [.read, .write, .delete], createDisposition: .open, on: client)
++                return SMB2ReadOnlyFile(file: file)
++            }
++        }
++    }
++
+     /**
+      Fetches data contents of a file from an offset with specified length. With reporting progress
+      on about every 1MiB.
+--- /dev/null
++++ b/AMSMB2/ReadOnlyFile.swift
+@@ -0,0 +1,81 @@
++// Nsurator addition to AMSMB2 (MIT): a bounded, read-only handle.
++// This uses the manager's already-authenticated client; negotiation, signing,
++// encryption and Guest-session policy are unchanged.
++import Foundation
++
++public final class SMB2ReadOnlyFile: @unchecked Sendable {
++    static let maximumWireReadBytes = 1_024 * 1_024
++    private let queue = DispatchQueue(label: "AMSMB2.ReadOnlyFile", qos: .userInitiated)
++    // Only accessed by queue. Every queued operation retains self until its
++    // callback completes, including close; no close/read handle race exists.
++    private var file: SMB2FileHandle?
++
++    init(file: SMB2FileHandle) { self.file = file }
++
++    public func attributes() async throws -> [URLResourceKey: any Sendable] {
++        try await perform { file in
++            var result: [URLResourceKey: any Sendable] = [:]
++            try file.fstat().populateResourceValue(&result)
++            return result
++        }
++    }
++
++    /// At most 16 MiB per call. Each wire READ is bounded by both the server
++    /// limit and 1 MiB, preserving cancellation opportunities for larger calls.
++    /// A false progress callback cancels before the next network READ.
++    public func read(offset: UInt64, length: Int,
++                     shouldContinue: @escaping @Sendable () -> Bool = { true }) async throws -> Data {
++        guard length > 0, length <= 16 * 1_024 * 1_024,
++              offset <= UInt64.max - UInt64(length) else { throw POSIXError(.EINVAL) }
++        return try await perform { file in
++            try Self.readChunks(offset: offset, length: length, serverMaximum: file.maxReadSize,
++                                shouldContinue: shouldContinue) { offset, count in
++                try file.pread(offset: offset, length: count)
++            }
++        }
++    }
++
++    // The production loop is shared with deterministic boundary tests; only the
++    // synchronous wire operation is substituted, never cancellation or chunking.
++    static func readChunks(offset: UInt64, length: Int, serverMaximum: Int,
++                           shouldContinue: () -> Bool,
++                           readBlock: (UInt64, Int) throws -> Data) throws -> Data {
++        guard length > 0, length <= 16 * 1_024 * 1_024,
++              offset <= UInt64.max - UInt64(length) else { throw POSIXError(.EINVAL) }
++        guard shouldContinue() else { throw CancellationError() }
++        let limit = min(serverMaximum, maximumWireReadBytes)
++        guard limit > 0 else { throw POSIXError(.EIO) }
++        var result = Data(); result.reserveCapacity(length)
++        while result.count < length {
++            guard shouldContinue() else { throw CancellationError() }
++            let count = min(limit, length - result.count)
++            let block = try readBlock(offset + UInt64(result.count), count)
++            guard block.count <= count else { throw POSIXError(.EIO) }
++            if block.isEmpty { break }
++            result.append(block)
++        }
++        guard shouldContinue() else { throw CancellationError() }
++        return result
++    }
++
++    public func close() async {
++        await withCheckedContinuation { continuation in
++            queue.async {
++                self.file?.close()
++                self.file = nil
++                continuation.resume()
++            }
++        }
++    }
++
++    private func perform<T: Sendable>(_ operation: @escaping @Sendable (SMB2FileHandle) throws -> T) async throws -> T {
++        try await withCheckedThrowingContinuation { continuation in
++            queue.async {
++                continuation.resume(with: Result {
++                    guard let file = self.file else { throw POSIXError(.EBADF) }
++                    return try operation(file)
++                })
++            }
++        }
++    }
++}

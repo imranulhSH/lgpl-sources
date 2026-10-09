@@ -1,0 +1,72 @@
+--- a/src/libbluray/disc/aacs.c
++++ b/src/libbluray/disc/aacs.c
+@@ -93,29 +93,4 @@
+-    const char * const libaacs[] = {
+-      getenv("LIBAACS_PATH"),
+-      "libaacs",
+-      "libmmbd",
+-#ifdef _WIN64
+-      "libmmbd64",
+-#endif
+-    };
+-    unsigned ii;
+-
+-    for (ii = *impl_id; ii < sizeof(libaacs) / sizeof(libaacs[0]); ii++) {
+-        if (libaacs[ii]) {
+-            void *handle = dl_dlopen(libaacs[ii], "0");
+-            if (handle) {
+-                /* One more libmmbd check. This is needed if libaacs is just a link to libmmbd ... */
+-                fptr_int32 fp;
+-                *(void **)(&fp) = dl_dlsym(handle, "bdplus_get_code_date");
+-                if (fp && fp(NULL) == 0) {
+-                    ii = IMPL_LIBMMBD;
+-                }
+-
+-                *impl_id = ii;
+-                BD_DEBUG(DBG_BLURAY, "Using %s for AACS\n", libaacs[ii]);
+-                return handle;
+-            }
+-        }
+-    }
+-
+-    BD_DEBUG(DBG_BLURAY | DBG_CRIT, "No usable AACS libraries found!\n");
++    (void)impl_id;
++    /* VPC_LIBBLURAY_DISABLE_AACS_BDPLUS_DLOPEN */
++    BD_DEBUG(DBG_BLURAY | DBG_CRIT,
++             "External AACS library loading is disabled by VisionPlayerCore.\n");
+--- a/src/libbluray/disc/bdplus.c
++++ b/src/libbluray/disc/bdplus.c
+@@ -97,29 +97,4 @@
+-    const char * const libbdplus[] = {
+-      getenv("LIBBDPLUS_PATH"),
+-      "libbdplus",
+-      "libmmbd",
+-#ifdef _WIN64
+-      "libmmbd64",
+-#endif
+-    };
+-    unsigned ii;
+-
+-    for (ii = *impl_id; ii < sizeof(libbdplus) / sizeof(libbdplus[0]); ii++) {
+-        if (libbdplus[ii]) {
+-            void *handle = dl_dlopen(libbdplus[ii], "0");
+-            if (handle) {
+-                /* One more libmmbd check. This is needed if libbdplus is just a link to libmmbd ... */
+-                fptr_int32 fp;
+-                *(void **)(&fp) = dl_dlsym(handle, "bdplus_get_code_date");
+-                if (fp && fp(NULL) == 0) {
+-                    ii = IMPL_LIBMMBD;
+-                }
+-
+-                *impl_id = ii;
+-                BD_DEBUG(DBG_BLURAY, "Using %s for BD+\n", libbdplus[ii]);
+-                return handle;
+-            }
+-        }
+-    }
+-
+-    BD_DEBUG(DBG_BLURAY | DBG_CRIT, "No usable BD+ libraries found!\n");
++    (void)impl_id;
++    /* VPC_LIBBLURAY_DISABLE_AACS_BDPLUS_DLOPEN */
++    BD_DEBUG(DBG_BLURAY | DBG_CRIT,
++             "External BD+ library loading is disabled by VisionPlayerCore.\n");

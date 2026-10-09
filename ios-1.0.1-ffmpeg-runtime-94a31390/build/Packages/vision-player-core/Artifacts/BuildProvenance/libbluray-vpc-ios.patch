@@ -1,0 +1,343 @@
+diff --git a/src/libbluray/bdnav/clpi_parse.c b/src/libbluray/bdnav/clpi_parse.c
+index 514afad..b35411a 100644
+--- a/src/libbluray/bdnav/clpi_parse.c
++++ b/src/libbluray/bdnav/clpi_parse.c
+@@ -585,7 +585,16 @@ clpi_access_point(const CLPI_CL *cl, uint32_t pkt, int next, int angle_change, u
+     }
+     if (jj == end && next) {
+         ii++;
+-        jj = 0;
++        if (ii < entry->num_ep_coarse) {
++            /* VPC_LIBBLURAY_REFRESH_NEXT_COARSE_RANGE */
++            start = entry->coarse[ii].ref_ep_fine_id;
++            if (ii < entry->num_ep_coarse - 1) {
++                end = entry->coarse[ii+1].ref_ep_fine_id;
++            } else {
++                end = entry->num_ep_fine;
++            }
++            jj = start;
++        }
+     } else if (spn != pkt && !next) {
+         jj--;
+     }
+diff --git a/src/libbluray/bluray.c b/src/libbluray/bluray.c
+index d52dadf..85ad3c7 100644
+--- a/src/libbluray/bluray.c
++++ b/src/libbluray/bluray.c
+@@ -4098,6 +4098,32 @@ int bd_user_input(BLURAY *bd, int64_t pts, uint32_t key)
+     return result;
+ }
+ 
++/* VPC_LIBBLURAY_HDMV_MENU_BUTTON_SNAPSHOT */
++int bd_select_hdmv_menu_button(BLURAY *bd,
++                               int64_t pts,
++                               uint32_t button_id,
++                               int activate)
++{
++    int result = -1;
++
++    if (!bd) {
++        return -1;
++    }
++
++    bd_mutex_lock(&bd->mutex);
++    _set_scr(bd, pts);
++    if (bd->title_type == title_hdmv) {
++        result = _run_gc(
++            bd,
++            activate ? GC_CTRL_BUTTON_ACTIVATE : GC_CTRL_BUTTON_SELECT,
++            button_id
++        );
++    }
++    bd_mutex_unlock(&bd->mutex);
++
++    return result;
++}
++
+ void bd_register_overlay_proc(BLURAY *bd, void *handle, bd_overlay_proc_f func)
+ {
+     if (!bd) {
+diff --git a/src/libbluray/bluray.h b/src/libbluray/bluray.h
+index 19c0f05..c435e26 100644
+--- a/src/libbluray/bluray.h
++++ b/src/libbluray/bluray.h
+@@ -1178,6 +1178,12 @@ BD_PUBLIC int bd_user_input(BLURAY *bd, int64_t pts, uint32_t key);
+  */
+ BD_PUBLIC int bd_mouse_select(BLURAY *bd, int64_t pts, uint16_t x, uint16_t y);
+ 
++/* VPC_LIBBLURAY_HDMV_MENU_BUTTON_SNAPSHOT */
++/** Select or select-and-activate an exact enabled HDMV menu button. */
++BD_PUBLIC int bd_select_hdmv_menu_button(BLURAY *bd,
++                                         int64_t pts,
++                                         uint32_t button_id,
++                                         int activate);
+ 
+ /*
+  * Testing and debugging
+diff --git a/src/libbluray/decoders/graphics_controller.c b/src/libbluray/decoders/graphics_controller.c
+index c837da3..b903698 100644
+--- a/src/libbluray/decoders/graphics_controller.c
++++ b/src/libbluray/decoders/graphics_controller.c
+@@ -501,13 +501,68 @@ static void _close_osd(GRAPHICS_CONTROLLER *gc, int plane)
+     }
+ }
+ 
++/* VPC_LIBBLURAY_HDMV_MENU_BUTTON_SNAPSHOT */
++static unsigned _copy_hdmv_menu_buttons(GRAPHICS_CONTROLLER *gc,
++                                        BLURAY_HDMV_MENU_BUTTON *buttons,
++                                        unsigned capacity)
++{
++    unsigned count = 0;
++
++    if (!gc || !gc->ig_drawn || !gc->igs || !gc->igs->ics || !gc->igs->complete) {
++        return 0;
++    }
++
++    unsigned page_id = bd_psr_read(gc->regs, PSR_MENU_PAGE_ID);
++    unsigned selected_button_id = bd_psr_read(gc->regs, PSR_SELECTED_BUTTON_ID);
++    BD_IG_PAGE *page = _find_page(&gc->igs->ics->interactive_composition, page_id);
++    if (!page) {
++        return 0;
++    }
++
++    unsigned ii;
++    for (ii = 0; ii < page->num_bogs; ii++) {
++        BD_IG_BOG *bog = &page->bog[ii];
++        unsigned enabled_button_id = gc->bog_data[ii].enabled_button;
++        BD_IG_BUTTON *button = _find_button_bog(bog, enabled_button_id);
++        BD_PG_OBJECT *object = button
++            ? _find_object_for_button(gc->igs, button, BTN_SELECTED, NULL)
++            : NULL;
++
++        if (!button || !object || !object->width || !object->height) {
++            continue;
++        }
++
++        if (buttons && count < capacity) {
++            buttons[count].id = button->id;
++            buttons[count].x = button->x_pos;
++            buttons[count].y = button->y_pos;
++            buttons[count].width = object->width;
++            buttons[count].height = object->height;
++            buttons[count].selected = button->id == selected_button_id;
++            buttons[count].auto_action = button->auto_action_flag;
++        }
++        count++;
++    }
++    return count;
++}
++
+ static void _flush_osd(GRAPHICS_CONTROLLER *gc, int plane, int64_t pts)
+ {
+     if (gc->overlay_proc) {
+         BD_OVERLAY ov = {0};
++        BLURAY_HDMV_MENU_BUTTON menu_buttons[MAX_NUM_BOGS];
+         ov.cmd     = BD_OVERLAY_FLUSH;
+         ov.pts     = pts;
+         ov.plane   = plane;
++        if (plane == BD_OVERLAY_IG) {
++            unsigned count = _copy_hdmv_menu_buttons(
++                gc,
++                menu_buttons,
++                MAX_NUM_BOGS
++            );
++            ov.menu_buttons = menu_buttons;
++            ov.menu_button_count = count > MAX_NUM_BOGS ? MAX_NUM_BOGS : count;
++        }
+ 
+         gc->overlay_proc(gc->overlay_proc_handle, &ov);
+     }
+@@ -1860,6 +1915,39 @@ static int _mouse_move(GRAPHICS_CONTROLLER *gc, uint16_t x, uint16_t y, GC_NAV_C
+     return gc->valid_mouse_position;
+ }
+ 
++static int _select_button_id(GRAPHICS_CONTROLLER *gc,
++                             uint32_t button_id,
++                             int activate,
++                             GC_NAV_CMDS *cmds)
++{
++    unsigned page_id;
++    BD_IG_PAGE *page;
++    BD_IG_BUTTON *button;
++
++    if (!gc->ig_drawn || !gc->igs || !gc->igs->ics) {
++        return -1;
++    }
++
++    page_id = bd_psr_read(gc->regs, PSR_MENU_PAGE_ID);
++    page = _find_page(&gc->igs->ics->interactive_composition, page_id);
++    if (!page || !_is_button_enabled(gc, page, button_id)) {
++        return 0;
++    }
++    button = _find_button_page(page, button_id, NULL);
++    if (!button || !_find_object_for_button(gc->igs, button, BTN_SELECTED, NULL)) {
++        return 0;
++    }
++
++    _select_button(gc, button_id);
++    if (activate) {
++        return _user_input(gc, BD_VK_ENTER, cmds);
++    }
++
++    _render_page(gc, -1, cmds);
++    _reset_user_timeout(gc);
++    return 1;
++}
++
+ static int _animate(GRAPHICS_CONTROLLER *gc, GC_NAV_CMDS *cmds)
+ {
+     int result = -1;
+@@ -2060,6 +2148,14 @@ int gc_run(GRAPHICS_CONTROLLER *gc, gc_ctrl_e ctrl, uint32_t param, GC_NAV_CMDS
+         case GC_CTRL_MOUSE_MOVE:
+             result = _mouse_move(gc, param >> 16, param & 0xffff, cmds);
+             break;
++
++        case GC_CTRL_BUTTON_SELECT:
++            result = _select_button_id(gc, param, 0, cmds);
++            break;
++
++        case GC_CTRL_BUTTON_ACTIVATE:
++            result = _select_button_id(gc, param, 1, cmds);
++            break;
+ #ifndef __COVERITY__
+         /* no "default:" :
+          * this chunk is used to trigger a warning when a new enum value is added,
+diff --git a/src/libbluray/decoders/graphics_controller.h b/src/libbluray/decoders/graphics_controller.h
+index e356f04..284b8fc 100644
+--- a/src/libbluray/decoders/graphics_controller.h
++++ b/src/libbluray/decoders/graphics_controller.h
+@@ -51,6 +51,8 @@ typedef enum {
+     /* user input */
+     GC_CTRL_VK_KEY,          /* param: bd_vk_key_e */
+     GC_CTRL_MOUSE_MOVE,      /* move selected button to (x,y), param: (x<<16 | y) */
++    GC_CTRL_BUTTON_SELECT,   /* param: HDMV button id */
++    GC_CTRL_BUTTON_ACTIVATE, /* param: HDMV button id */
+ 
+     /* HDMV VM control messages */
+     GC_CTRL_ENABLE_BUTTON,   /* param: button_id */
+diff --git a/src/libbluray/decoders/overlay.h b/src/libbluray/decoders/overlay.h
+index 394bf80..7369992 100644
+--- a/src/libbluray/decoders/overlay.h
++++ b/src/libbluray/decoders/overlay.h
+@@ -38,7 +38,21 @@ extern "C" {
+ #endif
+ 
+ /** Version number of the interface described in this file. */
+-#define BD_OVERLAY_INTERFACE_VERSION 2
++#define BD_OVERLAY_INTERFACE_VERSION 3
++
++/* VPC_LIBBLURAY_HDMV_MENU_BUTTON_SNAPSHOT */
++#define BLURAY_HDMV_MENU_BUTTON_SNAPSHOT_API 1
++
++/** Current enabled HDMV menu button exported with an IG flush event. */
++typedef struct bluray_hdmv_menu_button_s {
++    uint32_t id;          /**< HDMV button identifier */
++    uint16_t x;           /**< top-left x coordinate on the IG plane */
++    uint16_t y;           /**< top-left y coordinate on the IG plane */
++    uint16_t width;       /**< selected-state hit-test width */
++    uint16_t height;      /**< selected-state hit-test height */
++    uint8_t  selected;    /**< non-zero when this is the selected button */
++    uint8_t  auto_action; /**< non-zero when selection automatically activates */
++} BLURAY_HDMV_MENU_BUTTON;
+ 
+ /**
+  * Overlay plane
+@@ -113,6 +127,10 @@ typedef struct bd_overlay_s {
+     const BD_PG_PALETTE_ENTRY * palette; /**< overlay palette (256 entries) */
+     const BD_PG_RLE_ELEM      * img;     /**< RLE-compressed overlay image */
+ 
++    /** Enabled HDMV buttons, present only on Interactive Graphics FLUSH. */
++    const BLURAY_HDMV_MENU_BUTTON * menu_buttons;
++    uint16_t menu_button_count;
++
+ } BD_OVERLAY;
+ 
+ /*
+diff --git a/src/libbluray/disc/aacs.c b/src/libbluray/disc/aacs.c
+index 748c775..42bdb6e 100644
+--- a/src/libbluray/disc/aacs.c
++++ b/src/libbluray/disc/aacs.c
+@@ -90,35 +90,10 @@ int libaacs_required(void *have_file_handle, int (*have_file)(void *, const char
+ 
+ static void *_open_libaacs(int *impl_id)
+ {
+-    const char * const libaacs[] = {
+-      getenv("LIBAACS_PATH"),
+-      "libaacs",
+-      "libmmbd",
+-#ifdef _WIN64
+-      "libmmbd64",
+-#endif
+-    };
+-    unsigned ii;
+-
+-    for (ii = *impl_id; ii < sizeof(libaacs) / sizeof(libaacs[0]); ii++) {
+-        if (libaacs[ii]) {
+-            void *handle = dl_dlopen(libaacs[ii], "0");
+-            if (handle) {
+-                /* One more libmmbd check. This is needed if libaacs is just a link to libmmbd ... */
+-                fptr_int32 fp;
+-                *(void **)(&fp) = dl_dlsym(handle, "bdplus_get_code_date");
+-                if (fp && fp(NULL) == 0) {
+-                    ii = IMPL_LIBMMBD;
+-                }
+-
+-                *impl_id = ii;
+-                BD_DEBUG(DBG_BLURAY, "Using %s for AACS\n", libaacs[ii]);
+-                return handle;
+-            }
+-        }
+-    }
+-
+-    BD_DEBUG(DBG_BLURAY | DBG_CRIT, "No usable AACS libraries found!\n");
++    (void)impl_id;
++    /* VPC_LIBBLURAY_DISABLE_AACS_BDPLUS_DLOPEN */
++    BD_DEBUG(DBG_BLURAY | DBG_CRIT,
++             "External AACS library loading is disabled by VisionPlayerCore.\n");
+     return NULL;
+ }
+ 
+diff --git a/src/libbluray/disc/bdplus.c b/src/libbluray/disc/bdplus.c
+index 358699b..76cd5be 100644
+--- a/src/libbluray/disc/bdplus.c
++++ b/src/libbluray/disc/bdplus.c
+@@ -94,35 +94,10 @@ int libbdplus_required(void *have_file_handle, int (*have_file)(void *, const ch
+ 
+ static void *_libbdplus_open(int *impl_id)
+ {
+-    const char * const libbdplus[] = {
+-      getenv("LIBBDPLUS_PATH"),
+-      "libbdplus",
+-      "libmmbd",
+-#ifdef _WIN64
+-      "libmmbd64",
+-#endif
+-    };
+-    unsigned ii;
+-
+-    for (ii = *impl_id; ii < sizeof(libbdplus) / sizeof(libbdplus[0]); ii++) {
+-        if (libbdplus[ii]) {
+-            void *handle = dl_dlopen(libbdplus[ii], "0");
+-            if (handle) {
+-                /* One more libmmbd check. This is needed if libbdplus is just a link to libmmbd ... */
+-                fptr_int32 fp;
+-                *(void **)(&fp) = dl_dlsym(handle, "bdplus_get_code_date");
+-                if (fp && fp(NULL) == 0) {
+-                    ii = IMPL_LIBMMBD;
+-                }
+-
+-                *impl_id = ii;
+-                BD_DEBUG(DBG_BLURAY, "Using %s for BD+\n", libbdplus[ii]);
+-                return handle;
+-            }
+-        }
+-    }
+-
+-    BD_DEBUG(DBG_BLURAY | DBG_CRIT, "No usable BD+ libraries found!\n");
++    (void)impl_id;
++    /* VPC_LIBBLURAY_DISABLE_AACS_BDPLUS_DLOPEN */
++    BD_DEBUG(DBG_BLURAY | DBG_CRIT,
++             "External BD+ library loading is disabled by VisionPlayerCore.\n");
+     return NULL;
+ }
+ 

@@ -1,0 +1,27 @@
+--- a/libavformat/mpeg.c
++++ b/libavformat/mpeg.c
+@@ -729,6 +729,10 @@
+     char *sub_name;
+ } VobSubDemuxContext;
+ 
++/* VPC_VOBSUB_HOST_IO_INHERITANCE: exported for artifact capability auditing. */
++unsigned av_vpc_vobsub_host_io_patch_version(void);
++unsigned av_vpc_vobsub_host_io_patch_version(void) { return 1; }
++
+ static int vobsub_probe(const AVProbeData *p)
+ {
+     if (!strncmp(p->buf, REF_STRING, sizeof(REF_STRING) - 1))
+@@ -789,6 +793,13 @@
+ 
+     if ((ret = ff_copy_whiteblacklists(vobsub->sub_ctx, s)) < 0)
+         return ret;
++
++    /* Keep the caller's sandboxed custom I/O and cancellation boundary when
++     * opening the paired MPEG subtitle stream. Default file I/O is unchanged. */
++    vobsub->sub_ctx->io_open = s->io_open;
++    vobsub->sub_ctx->io_close2 = s->io_close2;
++    vobsub->sub_ctx->opaque = s->opaque;
++    vobsub->sub_ctx->interrupt_callback = s->interrupt_callback;
+ 
+     ret = avformat_open_input(&vobsub->sub_ctx, vobsub->sub_name, iformat, NULL);
+     if (ret < 0) {

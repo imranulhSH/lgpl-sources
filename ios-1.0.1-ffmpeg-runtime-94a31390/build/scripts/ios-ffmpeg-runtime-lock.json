@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "framework_name": "VisionPlayerCoreFFmpegRuntime",
+  "minimum_os": "17.0",
+  "provenance": "Packages/vision-player-core/Artifacts/BUILD-PROVENANCE.md; pinned FFmpeg 8.1 + maintained HostIO patches, libbluray 1.4.1, dav1d 1.5.4 BSD software AV1; macOS actual 17-codec/container decode and 20 HostIO/paired/transform tests passed; iOS integration recorded separately.",
+  "required_exported_capabilities": {
+    "h264_descriptor": [
+      "_ff_h264_decoder"
+    ],
+    "hevc_descriptor": [
+      "_ff_hevc_decoder"
+    ],
+    "vp9_descriptor": [
+      "_ff_vp9_decoder"
+    ],
+    "av1_descriptor_hardware_support_unverified": [
+      "_ff_av1_decoder"
+    ],
+    "aac_descriptor": [
+      "_ff_aac_decoder"
+    ],
+    "dts_descriptor": [
+      "_ff_dca_decoder"
+    ],
+    "truehd_descriptor": [
+      "_ff_truehd_decoder"
+    ],
+    "matroska_demuxer_descriptor": [
+      "_ff_matroska_demuxer"
+    ],
+    "mov_mp4_demuxer_descriptor": [
+      "_ff_mov_demuxer"
+    ],
+    "local_file_protocol_descriptor": [
+      "_ff_file_protocol"
+    ],
+    "http_protocol_descriptor": [
+      "_ff_http_protocol",
+      "_ff_tcp_protocol"
+    ],
+    "https_protocol_descriptor": [
+      "_ff_https_protocol",
+      "_ff_tls_protocol"
+    ],
+    "paired_vobsub_host_io": [
+      "_ff_vobsub_demuxer",
+      "_ff_dvdsub_decoder",
+      "_av_vpc_vobsub_host_io_patch_version"
+    ],
+    "av1_software_decoder": [
+      "_ff_libdav1d_decoder",
+      "_dav1d_version",
+      "_dav1d_open"
+    ]
+  },
+  "allowed_dependencies": [
+    "/System/Library/Frameworks/AVFoundation.framework/AVFoundation",
+    "/System/Library/Frameworks/AudioToolbox.framework/AudioToolbox",
+    "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+    "/System/Library/Frameworks/CoreMedia.framework/CoreMedia",
+    "/System/Library/Frameworks/CoreVideo.framework/CoreVideo",
+    "/System/Library/Frameworks/Security.framework/Security",
+    "/System/Library/Frameworks/VideoToolbox.framework/VideoToolbox",
+    "/usr/lib/libbz2.1.0.dylib",
+    "/usr/lib/libiconv.2.dylib",
+    "/usr/lib/libz.1.dylib",
+    "/usr/lib/libc++.1.dylib",
+    "/usr/lib/libSystem.B.dylib"
+  ],
+  "slices": {
+    "ios-arm64": {
+      "binary_sha256": "94a313906f3262f878265265791ffd00bf2a7de77d9796e1fa35e53650e82f42",
+      "headers_sha256": "f3c6426c9dbb2883b8415bc43e35e23d594592a7515e76f3f73fadf55e1c714d",
+      "modulemap_sha256": "560292189c9edc22163c5c2f18bed75e249ca8198c7acfcd9ac52819c07daa2d",
+      "privacy_sha256": "001d9a5fc2f294b19033d043173dd5882ff3bb3a10ce1c4669f1bece58899dd8"
+    },
+    "ios-arm64-simulator": {
+      "binary_sha256": "3ed80e52c659322716ab4b094ad84b84df33ede0d9d9ea8e164ebfcda3028651",
+      "headers_sha256": "f3c6426c9dbb2883b8415bc43e35e23d594592a7515e76f3f73fadf55e1c714d",
+      "modulemap_sha256": "560292189c9edc22163c5c2f18bed75e249ca8198c7acfcd9ac52819c07daa2d",
+      "privacy_sha256": "001d9a5fc2f294b19033d043173dd5882ff3bb3a10ce1c4669f1bece58899dd8"
+    }
+  }
+}

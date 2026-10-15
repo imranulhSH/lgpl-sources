@@ -1,0 +1,14 @@
+diff --git a/libavformat/tls_securetransport.c b/libavformat/tls_securetransport.c
+--- a/libavformat/tls_securetransport.c
++++ b/libavformat/tls_securetransport.c
+@@ -332,7 +332,9 @@ static int tls_open(URLContext *h, const char *uri, int flags, AVDictionary **op
+             break;
+         } else if (status != errSSLWouldBlock) {
+             av_log(h, AV_LOG_ERROR, "Unable to negotiate TLS/SSL session: %i\n", (int)status);
+-            ret = AVERROR(EIO);
++            ret = status == errSSLXCertChainInvalid || status == errSSLBadCert
++                ? (int)status
++                : AVERROR(EIO);
+             goto fail;
+         }
+     }

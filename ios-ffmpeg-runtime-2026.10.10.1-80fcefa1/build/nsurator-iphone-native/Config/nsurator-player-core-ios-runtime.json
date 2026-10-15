@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "runtimeVersion": "2026.10.10.1",
+  "frameworkName": "NsuratorPlayerCoreFFmpegRuntime",
+  "minimumIOSVersion": "17.0",
+  "slices": ["iphoneos-arm64", "iphonesimulator-arm64"],
+  "linkProfile": "base",
+  "extraFFmpegConfigureFlags": "--enable-libdav1d --disable-securetransport --disable-protocols --enable-protocol=async,bluray,cache,concat,concatf,crypto,data,fd,file,hls,http,pipe,subfile,tcp",
+  "extraRuntimeLibraries": "libdav1d",
+  "macReference": "nsurator-macos-native Config/nsurator-player-core-ffmpeg-sources.json, artifact 2026.10.09.1: the same sources, patches and base profile. The Mac configures --disable-network; the iPhone keeps plain http and tcp (no TLS) for the loopback HLS proxy (HLSLoopbackProxy) and nothing else.",
+  "sources": {
+    "ffmpeg": {
+      "archiveName": "ffmpeg-8.1.2.tar.xz",
+      "sha256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c",
+      "url": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz",
+      "version": "8.1.2"
+    },
+    "libbluray": {
+      "archiveName": "libbluray-1.4.1.tar.gz",
+      "sha256": "e22381a313a231d94ddf9180564b36d803f33bdfc7c0b53c03868bc43e5d163d",
+      "url": "https://code.videolan.org/videolan/libbluray/-/archive/1.4.1/libbluray-1.4.1.tar.gz",
+      "version": "1.4.1"
+    },
+    "libudfread": {
+      "archiveName": "libudfread-1.2.0.tar.gz",
+      "sha256": "adcce1190925f9d35a477757c5e3f0e221315d14d3d45b4ae62540ea0925f877",
+      "url": "https://code.videolan.org/videolan/libudfread/-/archive/1.2.0/libudfread-1.2.0.tar.gz",
+      "version": "1.2.0"
+    },
+    "dav1d": {
+      "archiveName": "dav1d-1.5.3.tar.gz",
+      "sha256": "cbe212b02faf8c6eed5b6d55ef8a6e363aaab83f15112e960701a9c3df813686",
+      "url": "https://code.videolan.org/videolan/dav1d/-/archive/1.5.3/dav1d-1.5.3.tar.gz",
+      "version": "1.5.3"
+    }
+  }
+}

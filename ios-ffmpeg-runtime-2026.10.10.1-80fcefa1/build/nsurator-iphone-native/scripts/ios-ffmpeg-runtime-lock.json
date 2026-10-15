@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "framework_name": "NsuratorPlayerCoreFFmpegRuntime",
+  "minimum_os": "17.0",
+  "provenance": "Vendor/NsuratorPlayerCoreFFmpegRuntime/PROVENANCE.md; built by scripts/build-ios-player-core-runtime.sh from Config/nsurator-player-core-ios-runtime.json with the shared player core's scripts: FFmpeg 8.1.2 + the core's patches, libbluray 1.4.1 + libudfread 1.2.0, dav1d 1.5.3, LGPL base profile (the Mac's 2026.10.09.1 recipe; http/tcp kept, no TLS).",
+  "headers_sha256": "98179cac69f5bfc7b02d3375f6ba79c4fa27b0a4fc2f14f6b83c39eb32bf74ba",
+  "required_exported_capabilities": {
+    "h264_descriptor": [
+      "_ff_h264_decoder"
+    ],
+    "hevc_descriptor": [
+      "_ff_hevc_decoder"
+    ],
+    "vp9_descriptor": [
+      "_ff_vp9_decoder"
+    ],
+    "av1_descriptor_hardware_support_unverified": [
+      "_ff_av1_decoder"
+    ],
+    "aac_descriptor": [
+      "_ff_aac_decoder"
+    ],
+    "dts_descriptor": [
+      "_ff_dca_decoder"
+    ],
+    "truehd_descriptor": [
+      "_ff_truehd_decoder"
+    ],
+    "matroska_demuxer_descriptor": [
+      "_ff_matroska_demuxer"
+    ],
+    "mov_mp4_demuxer_descriptor": [
+      "_ff_mov_demuxer"
+    ],
+    "local_file_protocol_descriptor": [
+      "_ff_file_protocol"
+    ],
+    "loopback_hls_http_protocol_descriptor": [
+      "_ff_http_protocol",
+      "_ff_tcp_protocol",
+      "_ff_hls_demuxer",
+      "_ff_crypto_protocol"
+    ],
+    "bluray_protocol_descriptor": [
+      "_ff_bluray_protocol"
+    ],
+    "text_and_bitmap_subtitle_decoders": [
+      "_ff_subrip_decoder",
+      "_ff_ass_decoder",
+      "_ff_pgssub_decoder",
+      "_ff_dvdsub_decoder"
+    ],
+    "paired_vobsub_host_io": [
+      "_ff_vobsub_demuxer",
+      "_ff_dvdsub_decoder",
+      "_avpriv_nsurator_vobsub_host_io_version"
+    ],
+    "deinterlace_filter": [
+      "_ff_vf_bwdif"
+    ],
+    "av1_software_decoder": [
+      "_ff_libdav1d_decoder",
+      "_dav1d_version",
+      "_dav1d_open"
+    ]
+  },
+  "forbidden_exports": [
+    "_ff_https_protocol",
+    "_ff_tls_protocol"
+  ],
+  "allowed_dependencies": [
+    "/System/Library/Frameworks/AudioToolbox.framework/AudioToolbox",
+    "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+    "/System/Library/Frameworks/CoreMedia.framework/CoreMedia",
+    "/System/Library/Frameworks/CoreVideo.framework/CoreVideo",
+    "/System/Library/Frameworks/VideoToolbox.framework/VideoToolbox",
+    "/usr/lib/libSystem.B.dylib",
+    "/usr/lib/libbz2.1.0.dylib",
+    "/usr/lib/libiconv.2.dylib",
+    "/usr/lib/libz.1.dylib"
+  ],
+  "slices": {
+    "ios-arm64": {
+      "binary_sha256": "80fcefa1b69d423df5e7dde95156e9189118f1cef2b00c0b99bb9c94a3a5d2ea",
+      "privacy_sha256": "001d9a5fc2f294b19033d043173dd5882ff3bb3a10ce1c4669f1bece58899dd8"
+    },
+    "ios-arm64-simulator": {
+      "binary_sha256": "bbd2798118f181e94802f9d7f12e085a597342d84f616de26156bbbf832c7dc0",
+      "privacy_sha256": "001d9a5fc2f294b19033d043173dd5882ff3bb3a10ce1c4669f1bece58899dd8"
+    }
+  }
+}

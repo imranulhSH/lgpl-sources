@@ -1,0 +1,22 @@
+diff --git a/src/libbluray/bdnav/clpi_parse.c b/src/libbluray/bdnav/clpi_parse.c
+index 9ed503a..66bb305 100644
+--- a/src/libbluray/bdnav/clpi_parse.c
++++ b/src/libbluray/bdnav/clpi_parse.c
+@@ -582,7 +582,16 @@ clpi_access_point(const CLPI_CL *cl, uint32_t pkt, int next, int angle_change, u
+     }
+     if (jj == end && next) {
+         ii++;
+-        jj = 0;
++        if (ii < entry->num_ep_coarse) {
++            /* NPC_LIBBLURAY_REFRESH_NEXT_COARSE_RANGE */
++            start = entry->coarse[ii].ref_ep_fine_id;
++            if (ii < entry->num_ep_coarse - 1) {
++                end = entry->coarse[ii+1].ref_ep_fine_id;
++            } else {
++                end = entry->num_ep_fine;
++            }
++            jj = start;
++        }
+     } else if (spn != pkt && !next) {
+         jj--;
+     }

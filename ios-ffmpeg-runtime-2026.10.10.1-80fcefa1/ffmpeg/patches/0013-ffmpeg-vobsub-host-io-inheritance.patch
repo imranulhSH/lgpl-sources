@@ -1,0 +1,31 @@
+--- a/libavformat/mpeg.c
++++ b/libavformat/mpeg.c
+@@ -747,6 +747,11 @@
+     return 0;
+ }
+ 
++/* Nsurator: version of the host-I/O inheritance below, read by the player
++ * core's shim (which links a weak fallback returning 0 for a stock libav). */
++int avpriv_nsurator_vobsub_host_io_version(void);
++int avpriv_nsurator_vobsub_host_io_version(void) { return 1; }
++
+ static int vobsub_read_header(AVFormatContext *s)
+ {
+     int i, ret = 0, header_parsed = 0, langidx = 0;
+@@ -790,6 +795,16 @@
+     if ((ret = ff_copy_whiteblacklists(vobsub->sub_ctx, s)) < 0)
+         return ret;
+ 
++    /* Nsurator: open the paired .sub through the parent's I/O callbacks, the
++     * way HLS and DASH open their segments through the parent's io_open, so
++     * an application that serves the index through custom I/O also serves
++     * (or refuses) the .sub; and bound the nested reads with the parent's
++     * interrupt callback, which HLS and DASH copy to their nested inputs. */
++    vobsub->sub_ctx->io_open            = s->io_open;
++    vobsub->sub_ctx->io_close2          = s->io_close2;
++    vobsub->sub_ctx->opaque             = s->opaque;
++    vobsub->sub_ctx->interrupt_callback = s->interrupt_callback;
++
+     ret = avformat_open_input(&vobsub->sub_ctx, vobsub->sub_name, iformat, NULL);
+     if (ret < 0) {
+         av_log(s, AV_LOG_ERROR, "Unable to open %s as MPEG subtitles\n", vobsub->sub_name);

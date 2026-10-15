@@ -1,0 +1,93 @@
+{
+  "architecture": "arm64",
+  "binarySHA256": "80fcefa1b69d423df5e7dde95156e9189118f1cef2b00c0b99bb9c94a3a5d2ea",
+  "bundleIdentifier": "com.haoyu.nsurator.NsuratorPlayerCoreFFmpegRuntime",
+  "exportListSHA256": "b0a7e806d7b232107d376dc201ea7f74f3ccb50642871d57d8054d9bb27c0977",
+  "exportedSymbolCount": 7493,
+  "installName": "@rpath/NsuratorPlayerCoreFFmpegRuntime.framework/NsuratorPlayerCoreFFmpegRuntime",
+  "linkCommand": [
+    "/usr/bin/xcrun",
+    "--sdk",
+    "iphoneos",
+    "clang",
+    "-target",
+    "arm64-apple-ios17.0",
+    "-isysroot",
+    "$(xcrun --sdk iphoneos --show-sdk-path)",
+    "-dynamiclib",
+    "-Wl,-force_load,ffmpeg-install/iphoneos-arm64/lib/libavfilter.a",
+    "-Wl,-force_load,ffmpeg-install/iphoneos-arm64/lib/libavformat.a",
+    "-Wl,-force_load,ffmpeg-install/iphoneos-arm64/lib/libavcodec.a",
+    "-Wl,-force_load,ffmpeg-install/iphoneos-arm64/lib/libswresample.a",
+    "-Wl,-force_load,ffmpeg-install/iphoneos-arm64/lib/libswscale.a",
+    "-Wl,-force_load,ffmpeg-install/iphoneos-arm64/lib/libavutil.a",
+    "-Wl,-force_load,dependencies/iphoneos-arm64/lib/libbluray.a",
+    "-Wl,-force_load,dependencies/iphoneos-arm64/lib/libdav1d.a",
+    "-Wl,-install_name,@rpath/NsuratorPlayerCoreFFmpegRuntime.framework/NsuratorPlayerCoreFFmpegRuntime",
+    "-Wl,-compatibility_version,1.0.0",
+    "-Wl,-current_version,1.0.0",
+    "-Wl,-headerpad_max_install_names",
+    "-lm",
+    "-framework",
+    "VideoToolbox",
+    "-framework",
+    "CoreFoundation",
+    "-framework",
+    "CoreMedia",
+    "-framework",
+    "CoreVideo",
+    "-lbz2",
+    "-liconv",
+    "-framework",
+    "AudioToolbox",
+    "-lz",
+    "-o",
+    "NsuratorPlayerCoreFFmpegRuntime.framework/NsuratorPlayerCoreFFmpegRuntime"
+  ],
+  "linkedSDKVersion": "27.0",
+  "minimumOSVersion": "17.0",
+  "name": "NsuratorPlayerCoreFFmpegRuntime",
+  "relativePath": "NsuratorPlayerCoreFFmpegRuntime.framework",
+  "schemaVersion": 1,
+  "sdk": "iphoneos",
+  "shortVersion": "8.1.2",
+  "staticInputs": [
+    {
+      "relativePath": "ffmpeg-install/iphoneos-arm64/lib/libavfilter.a",
+      "sha256": "f04c4ee726d8d0b07446f0a588a2c22cdfe965fff3833e0cb1175d02cc58cbea"
+    },
+    {
+      "relativePath": "ffmpeg-install/iphoneos-arm64/lib/libavformat.a",
+      "sha256": "06c206830eaf43c20ba3a5a4b431efc6fa1facff0136e3aace80a11b47d07ae4"
+    },
+    {
+      "relativePath": "ffmpeg-install/iphoneos-arm64/lib/libavcodec.a",
+      "sha256": "c2010e14d5a1c2b7e58f8cf5c7b3526e0540b3438d678abe4f21f34dcf306c4b"
+    },
+    {
+      "relativePath": "ffmpeg-install/iphoneos-arm64/lib/libswresample.a",
+      "sha256": "ab774a24c9e0f1b59b302a158370855181d20070de1e1dc79f5be2f90de13ace"
+    },
+    {
+      "relativePath": "ffmpeg-install/iphoneos-arm64/lib/libswscale.a",
+      "sha256": "9aaeff35cb20fa379befcb6b53f49a809f148a9bbe727710a2ca70e723028bd9"
+    },
+    {
+      "relativePath": "ffmpeg-install/iphoneos-arm64/lib/libavutil.a",
+      "sha256": "66f7f003d79fff5024bae2a458fef6ac25a49297cd7d8efaa2eba72a0d726bab"
+    },
+    {
+      "relativePath": "dependencies/iphoneos-arm64/lib/libbluray.a",
+      "sha256": "bd6e0090ff9d5289cb50eb66671c95a12c9b9bae19c2aa70c6906abdb2321c11"
+    },
+    {
+      "relativePath": "dependencies/iphoneos-arm64/lib/libdav1d.a",
+      "sha256": "1be8b448f83fc6488ecaf1284772dc32dc12924e39175ab473a94903f3c20e8a"
+    }
+  ],
+  "toolchain": {
+    "clang": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
+    "ld": "@(#)PROGRAM:ld PROJECT:ld-27037.1"
+  },
+  "uuid": "A4A43AE8-105A-31F4-88CA-C5EAA327E028"
+}

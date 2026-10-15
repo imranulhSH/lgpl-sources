@@ -1,0 +1,16 @@
+--- a/libavformat/hls.c
++++ b/libavformat/hls.c
+@@ -2693,6 +2693,13 @@
+     seek_timestamp = av_rescale_rnd(timestamp, AV_TIME_BASE,
+                                     s->streams[stream_index]->time_base.den,
+                                     AV_ROUND_DOWN);
++
++    /* The audio presentation can begin before the first demuxed video
++     * packet. Permit exactly that known origin interval for an initial rewind;
++     * timestamps before the actual format origin remain invalid. */
++    if (s->start_time != AV_NOPTS_VALUE &&
++        seek_timestamp >= s->start_time && seek_timestamp < first_timestamp)
++        seek_timestamp = first_timestamp;
+ 
+     duration = s->duration == AV_NOPTS_VALUE ?
+                0 : s->duration;

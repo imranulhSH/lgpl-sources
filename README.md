@@ -17,6 +17,7 @@ changes to it, or what is needed to rebuild it.
 | Release tag | App builds | Libraries (LGPL in bold) | How the app links them |
 |---|---|---|---|
 | [`ios-1.0.1-ffmpeg-runtime-94a31390`](ios-1.0.1-ffmpeg-runtime-94a31390/) | Nsurator for iPhone and iPad 1.0.1 (build 101) | **FFmpeg 8.1** (7 patches), **libbluray 1.4.1** (3 changes), **libudfread** (1.2.0 plus 3 upstream commits), dav1d 1.5.4 | Dynamic framework `VisionPlayerCoreFFmpegRuntime.framework` |
+| [`ios-ffmpeg-runtime-2026.10.10.1-80fcefa1`](ios-ffmpeg-runtime-2026.10.10.1-80fcefa1/) | Nsurator for iPhone and iPad 1.0.3 (build 103) and 1.0.4 (build 104) | **FFmpeg 8.1.2** (13 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Dynamic framework `NsuratorPlayerCoreFFmpegRuntime.framework` |
 | [`ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6`](ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/) | Nsurator for iPhone and iPad 1.0.1 (build 101) | **libsmb2** (2 patches) and **AMSMB2 4.0.3** (1 patch) | Dynamic framework `AMSMB2.framework` |
 | [`macos-ffmpeg-artifact-2026.09.24.1`](macos-ffmpeg-artifact-2026.09.24.1/) | Nsurator for Mac 5.9.17 (build 8), builds made on or after 2026-09-24 that pin this artifact | **FFmpeg 8.1.2** (7 patches), **libbluray 1.4.1** (3 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable and its decoder helper |
 | [`macos-ffmpeg-artifact-2026.10.09.1`](macos-ffmpeg-artifact-2026.10.09.1/) | Nsurator for Mac builds that pin artifact 2026.10.09.1 (player core `ebfc8a0`, then `0d5c2fe`): the first Mac App Store version after 5.9.17 (build 8) and later | The same libraries as 2026.09.24.1, byte for byte | Dynamic framework `NsuratorPlayerCoreFFmpegRuntime.framework`, loaded by the app executable and its decoder helper |
@@ -153,6 +154,7 @@ Nsurator 应用本身不开源，其源代码不在这里。本仓库只包含�
 | Release 标签 | 应用版本 | 库（粗体为 LGPL） | 链接方式 |
 |---|---|---|---|
 | `ios-1.0.1-ffmpeg-runtime-94a31390` | Nsurator iPhone/iPad 1.0.1（101） | **FFmpeg 8.1**（7 个补丁）、**libbluray 1.4.1**（3 处修改）、**libudfread**（1.2.0 之后 3 个上游提交）、dav1d 1.5.4 | 动态框架 `VisionPlayerCoreFFmpegRuntime.framework` |
+| `ios-ffmpeg-runtime-2026.10.10.1-80fcefa1` | Nsurator iPhone/iPad 1.0.3（103）和 1.0.4（104） | **FFmpeg 8.1.2**（13 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 动态框架 `NsuratorPlayerCoreFFmpegRuntime.framework` |
 | `ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6` | Nsurator iPhone/iPad 1.0.1（101） | **libsmb2**（2 个补丁）、**AMSMB2 4.0.3**（1 个补丁） | 动态框架 `AMSMB2.framework` |
 | `macos-ffmpeg-artifact-2026.09.24.1` | Nsurator for Mac 5.9.17（build 8），2026-09-24 及之后、固定到此 artifact 的构建 | **FFmpeg 8.1.2**（7 个补丁）、**libbluray 1.4.1**（3 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序和解码辅助进程 |
 | `macos-ffmpeg-artifact-2026.10.09.1` | 固定到 artifact 2026.10.09.1（播放核心 `ebfc8a0`，之后为 `0d5c2fe`）的 Mac 构建：5.9.17（build 8）之后提交的第一个 Mac App Store 版本及以后 | 与 2026.09.24.1 完全相同的库 | 动态框架 `NsuratorPlayerCoreFFmpegRuntime.framework`，由应用主程序和解码辅助进程加载 |

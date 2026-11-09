@@ -1,0 +1,997 @@
+--- a/libavformat/hls.c
++++ b/libavformat/hls.c
+@@ -76,6 +76,8 @@
+ 
+ struct segment {
+     int64_t duration;
++    int64_t epoch_id;
++    int64_t timeline_start;
+     int64_t url_offset;
+     int64_t size;
+     char *url;
+@@ -133,6 +135,30 @@
+     int m3u8_hold_counters;
+     int64_t cur_seg_offset;
+     int64_t last_load_time;
++    int epoch_clock_count;
++    struct { int64_t id, offset, raw_reference; } epoch_clocks[64];
++    int subtitle_waiting_for_epoch;
++    int subtitle_packet_unshifted;
++    int64_t subtitle_packet_epoch;
++    int epoch_active;
++    int epoch_boundary;
++    int epoch_origin_valid;
++    int64_t epoch_id;
++    int64_t epoch_started_at;
++    int64_t epoch_origin;
++    int64_t epoch_offset;
++    int stream_origin_valid[64];
++    int64_t stream_origins[64];
++    int64_t stream_origin_ticks[64];
++    int raw_next_valid[64];
++    int64_t raw_next_pts[64];
++    int observed_end_valid[64];
++    int64_t observed_end[64];
++    int64_t maximum_packet_duration[64];
++    int has_discontinuity;
++    int priming_retained_subtitle_window;
++    int subtitle_started;
++    uint64_t subtitle_media_generation_seen;
+ 
+     /* Currently active Media Initialization Section */
+     struct segment *cur_init_section;
+@@ -219,6 +245,7 @@
+     int prefer_x_start;
+     int first_packet;
+     int64_t first_timestamp;
++    uint64_t media_refresh_generation;
+     int64_t cur_timestamp;
+     AVIOInterruptCB *interrupt_callback;
+     AVDictionary *avio_opts;
+@@ -239,6 +266,7 @@
+ {
+     int i;
+     for (i = 0; i < n_segments; i++) {
++        if (!segments[i]) continue;
+         av_freep(&segments[i]->key);
+         av_freep(&segments[i]->url);
+         av_freep(&segments[i]);
+@@ -787,11 +815,36 @@
+     return 0;
+ }
+ 
++static int parse_segment_duration(const char *text, int64_t *result)
++{
++    uint64_t seconds = 0, fraction = 0, scale = 100000;
++    const unsigned char *p = (const unsigned char *)text;
++    if (*p < '0' || *p > '9') return AVERROR_INVALIDDATA;
++    while (*p >= '0' && *p <= '9') {
++        if (seconds > ((uint64_t)INT64_MAX / AV_TIME_BASE - (*p - '0')) / 10)
++            return AVERROR_INVALIDDATA;
++        seconds = seconds * 10 + (*p++ - '0');
++    }
++    if (*p == '.') {
++        p++;
++        if (*p < '0' || *p > '9') return AVERROR_INVALIDDATA;
++        while (*p >= '0' && *p <= '9') {
++            fraction += (*p++ - '0') * scale;
++            scale /= 10;
++        }
++    }
++    if (*p && *p != ',') return AVERROR_INVALIDDATA;
++    if (seconds > (INT64_MAX - fraction) / AV_TIME_BASE) return AVERROR_INVALIDDATA;
++    *result = seconds * AV_TIME_BASE + fraction;
++    return *result > 0 ? 0 : AVERROR_INVALIDDATA;
++}
++
+ static int parse_playlist(HLSContext *c, const char *url,
+                           struct playlist *pls, AVIOContext *in)
+ {
+     int ret = 0, is_segment = 0, is_variant = 0;
+     int64_t duration = 0;
++    int64_t epoch_id = 0;
+     enum KeyType key_type = KEY_NONE;
+     uint8_t iv[16] = "";
+     int has_iv = 0;
+@@ -911,6 +964,17 @@
+                 seq_no &= INT64_MAX/2;
+             }
+             pls->start_seq_no = seq_no;
++        } else if (av_strstart(line, "#EXT-X-DISCONTINUITY-SEQUENCE:", &ptr)) {
++            char *end;
++            errno = 0;
++            epoch_id = strtoll(ptr, &end, 10);
++            if (errno || end == ptr || *end || epoch_id < 0 || (pls && pls->n_segments)) {
++                ret = AVERROR_INVALIDDATA;
++                goto fail;
++            }
++        } else if (!strcmp(line, "#EXT-X-DISCONTINUITY")) {
++            if (epoch_id == INT64_MAX) { ret = AVERROR_INVALIDDATA; goto fail; }
++            epoch_id++;
+         } else if (av_strstart(line, "#EXT-X-PLAYLIST-TYPE:", &ptr)) {
+             ret = ensure_playlist(c, &pls, url);
+             if (ret < 0)
+@@ -980,12 +1044,8 @@
+             if (pls)
+                 pls->finished = 1;
+         } else if (av_strstart(line, "#EXTINF:", &ptr)) {
+-            double d = atof(ptr) * AV_TIME_BASE;
+-            if (d < 0 || d > INT64_MAX || isnan(d)) {
+-                av_log(c->ctx, AV_LOG_WARNING, "EXTINF %f unsupported\n", d / AV_TIME_BASE);
+-                d = 0;
+-            }
+-            duration = d;
++            ret = parse_segment_duration(ptr, &duration);
++            if (ret < 0) goto fail;
+             is_segment = 1;
+         } else if (av_strstart(line, "#EXT-X-BYTERANGE:", &ptr)) {
+             seg_size = strtoll(ptr, NULL, 10);
+@@ -1072,7 +1132,13 @@
+                     duration = 0.001 * AV_TIME_BASE;
+                 }
+                 seg->duration = duration;
++                seg->epoch_id = epoch_id;
++                seg->timeline_start = 0;
+                 seg->key_type = key_type;
++                if (pls->n_segments >= 65536) {
++                    av_free(seg->key); av_free(seg->url); av_free(seg);
++                    ret = AVERROR(ENOSPC); goto fail;
++                }
+                 dynarray_add(&pls->segments, &pls->n_segments, seg);
+                 is_segment = 0;
+ 
+@@ -1090,29 +1156,80 @@
+             }
+         }
+     }
++    if (pls && pls->n_segments) {
++        int64_t timeline = 0;
++        if (prev_segments && prev_n_segments) {
++            int64_t removed = pls->start_seq_no - prev_start_seq_no;
++            if (removed < 0 || removed > prev_n_segments) {
++                /* A missing window cannot supply the durations needed for an
++                 * exact presentation timeline. Do not invent an epoch. */
++                ret = AVERROR_INVALIDDATA;
++                goto fail;
++            }
++            timeline = prev_segments[0]->timeline_start;
++            for (int n = 0; n < removed; n++) {
++                if (timeline > INT64_MAX - prev_segments[n]->duration) { ret = AVERROR_INVALIDDATA; goto fail; }
++                timeline += prev_segments[n]->duration;
++            }
++        }
++        for (int n = 0; n < pls->n_segments; n++) {
++            pls->segments[n]->timeline_start = timeline;
++            if (pls->segments[n]->epoch_id != 0) pls->has_discontinuity = 1;
++            if (prev_segments) {
++                int64_t old = pls->start_seq_no + n - prev_start_seq_no;
++                if (old >= 0 && old < prev_n_segments &&
++                    (pls->segments[n]->epoch_id != prev_segments[old]->epoch_id ||
++                     pls->segments[n]->duration != prev_segments[old]->duration)) {
++                    ret = AVERROR_INVALIDDATA;
++                    goto fail;
++                }
++            }
++            if (timeline > INT64_MAX - pls->segments[n]->duration) { ret = AVERROR_INVALIDDATA; goto fail; }
++            timeline += pls->segments[n]->duration;
++        }
++    }
++    /* A look-ahead refresh can advance the advertised window while the
++     * current subdemuxer still owns bytes from its previous segment. Retain
++     * only that unread prefix; never free its crypto/range metadata early. */
++    if (prev_segments && pls->epoch_active && pls->cur_seq_no < pls->start_seq_no &&
++        pls->cur_seq_no >= prev_start_seq_no) {
++        int64_t keep = pls->start_seq_no - pls->cur_seq_no;
++        int64_t from = pls->cur_seq_no - prev_start_seq_no;
++        if (keep > prev_n_segments - from || keep + pls->n_segments > 65536) {
++            ret = AVERROR(ENOSPC); goto fail;
++        }
++        struct segment **joined = av_malloc_array(keep + pls->n_segments, sizeof(*joined));
++        if (!joined) { ret = AVERROR(ENOMEM); goto fail; }
++        for (int n = 0; n < keep; n++) {
++            joined[n] = prev_segments[from+n];
++            prev_segments[from+n] = NULL;
++        }
++        memcpy(joined + keep, pls->segments, pls->n_segments * sizeof(*joined));
++        av_freep(&pls->segments);
++        pls->segments = joined;
++        pls->n_segments += keep;
++        pls->start_seq_no = pls->cur_seq_no;
++    }
+     if (prev_segments) {
+-        if (pls->start_seq_no > prev_start_seq_no && c->first_timestamp != AV_NOPTS_VALUE) {
+-            int64_t prev_timestamp = c->first_timestamp;
+-            int i;
+-            int64_t diff = pls->start_seq_no - prev_start_seq_no;
+-            for (i = 0; i < prev_n_segments && i < diff; i++) {
+-                c->first_timestamp += prev_segments[i]->duration;
+-            }
+-            av_log(c->ctx, AV_LOG_DEBUG, "Media sequence change (%"PRId64" -> %"PRId64")"
+-                   " reflected in first_timestamp: %"PRId64" -> %"PRId64"\n",
+-                   prev_start_seq_no, pls->start_seq_no,
+-                   prev_timestamp, c->first_timestamp);
+-        } else if (pls->start_seq_no < prev_start_seq_no) {
+-            av_log(c->ctx, AV_LOG_WARNING, "Media sequence changed unexpectedly: %"PRId64" -> %"PRId64"\n",
+-                   prev_start_seq_no, pls->start_seq_no);
+-        }
++        /* Each playlist already retains absolute EXTINF timeline positions.
++         * Do not advance a shared origin once for every refreshed rendition. */
+         free_segment_dynarray(prev_segments, prev_n_segments);
+         av_freep(&prev_segments);
+     }
+-    if (pls)
++    if (pls) {
+         pls->last_load_time = av_gettime_relative();
++        if (pls->is_subtitle) pls->subtitle_media_generation_seen = c->media_refresh_generation;
++        if (!pls->is_subtitle && pls->needed) {
++            if (c->media_refresh_generation == UINT64_MAX) { ret = AVERROR_INVALIDDATA; goto fail; }
++            c->media_refresh_generation++;
++        }
++    }
+ 
+ fail:
++    if (prev_segments) {
++        free_segment_dynarray(prev_segments, prev_n_segments);
++        av_freep(&prev_segments);
++    }
+     av_free(new_url);
+     if (close_in)
+         ff_format_io_close(c->ctx, &in);
+@@ -1127,7 +1244,7 @@
+ static struct segment *current_segment(struct playlist *pls)
+ {
+     int64_t n = pls->cur_seq_no - pls->start_seq_no;
+-    if (n >= pls->n_segments)
++    if (n < 0 || n >= pls->n_segments)
+         return NULL;
+     return pls->segments[n];
+ }
+@@ -1135,7 +1252,7 @@
+ static struct segment *next_segment(struct playlist *pls)
+ {
+     int64_t n = pls->cur_seq_no - pls->start_seq_no + 1;
+-    if (n >= pls->n_segments)
++    if (n < 0 || n >= pls->n_segments)
+         return NULL;
+     return pls->segments[n];
+ }
+@@ -1602,7 +1719,7 @@
+         reload_count++;
+         if (reload_count > c->max_reload)
+             return AVERROR_EOF;
+-        if (!v->finished &&
++        if (!v->finished && !v->priming_retained_subtitle_window &&
+             av_gettime_relative() - v->last_load_time >= reload_interval) {
+             if ((ret = parse_playlist(c, v->url, v, NULL)) < 0) {
+                 if (ret != AVERROR_EXIT)
+@@ -1648,6 +1765,81 @@
+     return ret;
+ }
+ 
++/* Bounded clock history connects external WebVTT renditions to their
++ * variant's measured MPEG clock, including probe-retained older epochs. */
++static int remember_epoch_clock(struct playlist *pls, int64_t id, int64_t offset, int64_t raw_reference)
++{
++    for (int n = 0; n < pls->epoch_clock_count; n++)
++        if (pls->epoch_clocks[n].id == id) {
++            if (pls->epoch_clocks[n].offset != offset) return AVERROR_INVALIDDATA;
++            if (pls->epoch_clocks[n].raw_reference == AV_NOPTS_VALUE)
++                pls->epoch_clocks[n].raw_reference = raw_reference;
++            return 0;
++        }
++    if (pls->epoch_clock_count == FF_ARRAY_ELEMS(pls->epoch_clocks)) {
++        memmove(pls->epoch_clocks, pls->epoch_clocks + 1,
++                sizeof(pls->epoch_clocks) - sizeof(pls->epoch_clocks[0]));
++        pls->epoch_clock_count--;
++    }
++    pls->epoch_clocks[pls->epoch_clock_count].id = id;
++    pls->epoch_clocks[pls->epoch_clock_count].offset = offset;
++    pls->epoch_clocks[pls->epoch_clock_count++].raw_reference = raw_reference;
++    return 0;
++}
++
++static int subtitle_epoch_offset(struct playlist *sub, int64_t epoch, int64_t *offset, int64_t *raw_reference)
++{
++    HLSContext *c = sub->parent->priv_data;
++    struct playlist *reference = NULL;
++    for (int n = 0; n < c->n_variants; n++) {
++        struct variant *variant = c->variants[n];
++        int contains = 0;
++        for (int j = 0; j < variant->n_playlists; j++)
++            if (variant->playlists[j] == sub) contains = 1;
++        struct playlist *main = variant->playlists[0];
++        if (contains && main->needed && !main->is_subtitle) {
++            reference = main;
++            break;
++        }
++    }
++    if (!reference) return AVERROR_INVALIDDATA;
++    for (int n = 0; n < reference->epoch_clock_count; n++)
++        if (reference->epoch_clocks[n].id == epoch) {
++            *offset = reference->epoch_clocks[n].offset;
++            if (raw_reference) {
++                *raw_reference = reference->epoch_clocks[n].raw_reference;
++                if (*raw_reference == AV_NOPTS_VALUE) return AVERROR(EAGAIN);
++            }
++            return 0;
++        }
++    /* A future epoch waits for the A/V demuxer to drain and measure its clock.
++     * A missing old epoch cannot be reconstructed from playlist durations. */
++    return !reference->epoch_active || epoch > reference->epoch_id ?
++            AVERROR(EAGAIN) : AVERROR_INVALIDDATA;
++}
++
++static int shift_subtitle_epoch_packet(struct playlist *pls)
++{
++    if (!pls->subtitle_packet_unshifted) return 0;
++    int64_t offset;
++    int ret = subtitle_epoch_offset(pls, pls->subtitle_packet_epoch, &offset, NULL);
++    if (ret < 0) return ret;
++    if (!pls->ctx || pls->pkt->stream_index < 0 || pls->pkt->stream_index >= pls->ctx->nb_streams)
++        return AVERROR_INVALIDDATA;
++    int64_t shift = av_rescale_q(offset, AV_TIME_BASE_Q,
++            pls->ctx->streams[pls->pkt->stream_index]->time_base);
++    int64_t *timestamps[] = { &pls->pkt->pts, &pls->pkt->dts };
++    for (int n = 0; n < FF_ARRAY_ELEMS(timestamps); n++) {
++        int64_t value = *timestamps[n];
++        if (value == AV_NOPTS_VALUE) continue;
++        if ((shift > 0 && value > INT64_MAX - shift) ||
++            (shift < 0 && value <= INT64_MIN - shift)) return AVERROR_INVALIDDATA;
++        *timestamps[n] = value + shift;
++    }
++    pls->subtitle_packet_unshifted = 0;
++    return 0;
++}
++
+ static int read_data_continuous(void *opaque, uint8_t *buf, int buf_size)
+ {
+     struct playlist *v = opaque;
+@@ -1671,6 +1863,16 @@
+         return ret;
+ 
+     seg = current_segment(v);
++    if (!seg) return AVERROR_INVALIDDATA;
++    if (!v->epoch_active) {
++        v->epoch_active = 1;
++        v->epoch_id = seg->epoch_id;
++        v->epoch_started_at = seg->timeline_start;
++        if ((ret = remember_epoch_clock(v, v->epoch_id, 0, AV_NOPTS_VALUE)) < 0) return ret;
++    } else if (seg->epoch_id != v->epoch_id) {
++        v->epoch_boundary = 1;
++        return AVERROR_EOF;
++    }
+ 
+     if (!v->input || (c->http_persistent && v->input_read_done)) {
+         /* load/update Media Initialization Section, if any */
+@@ -1806,10 +2008,20 @@
+     const AVInputFormat *in_fmt;
+     AVDictionary *opts = NULL;
+     int ret;
+-
++    int64_t epoch_offset, reference;
++    struct segment *segment = current_segment(pls);
++    if (!segment) return AVERROR_INVALIDDATA;
++    ret = subtitle_epoch_offset(pls, segment->epoch_id, &epoch_offset, &reference);
++    pls->subtitle_waiting_for_epoch = ret == AVERROR(EAGAIN);
++    if (ret < 0) return ret;
++
++    if (!pls->subtitle_started) {
++        pls->subtitle_started = 1;
++    }
+     if (!(pls->ctx = avformat_alloc_context()))
+         return AVERROR(ENOMEM);
+ 
++    av_freep(&pls->pb.pub.buffer);
+     pls->read_buffer = av_malloc(INITIAL_BUFFER_SIZE);
+     if (!pls->read_buffer) {
+         avformat_free_context(pls->ctx);
+@@ -1822,6 +2034,7 @@
+     pls->pb.pub.seekable = 0;
+     pls->ctx->pb       = &pls->pb.pub;
+     pls->ctx->io_open  = nested_io_open;
++    pls->ctx->interrupt_callback = pls->parent->interrupt_callback;
+ 
+     ret = ff_copy_whiteblacklists(pls->ctx, pls->parent);
+     if (ret < 0)
+@@ -1829,6 +2042,9 @@
+ 
+     in_fmt = av_find_input_format("webvtt");
+     av_dict_copy(&opts, c->seg_format_opts, 0);
++    av_dict_set(&opts, "hls_timestamp_map", "1", 0);
++    if (reference != AV_NOPTS_VALUE)
++        av_dict_set_int(&opts, "hls_timestamp_reference", av_rescale_q(reference, AV_TIME_BASE_Q, MPEG_TIME_BASE_Q), 0);
+     ret = avformat_open_input(&pls->ctx, current_segment(pls)->url, in_fmt, &opts);
+     av_dict_free(&opts);
+ 
+@@ -1841,6 +2057,18 @@
+     int ret;
+ 
+ restart:
++    if (ff_check_interrupt(c->interrupt_callback)) return AVERROR_EXIT;
++    /* A media refresh may expose later subtitle segments before a wall-clock
++     * reload interval elapses (fast decode, probe, or a DVR window). Check the
++     * selected rendition once per successful media refresh, without relying
++     * on equality of sequence numbers across rendition playlists. */
++    if (!v->finished &&
++        v->cur_seq_no >= v->start_seq_no + v->n_segments &&
++        v->subtitle_media_generation_seen != c->media_refresh_generation) {
++        v->subtitle_media_generation_seen = c->media_refresh_generation;
++        ret = parse_playlist(c, v->url, v, NULL);
++        if (ret < 0) return ret;
++    }
+     ret = reload_playlist(v, c);
+     if (ret < 0)
+         return ret;
+@@ -1856,8 +2084,15 @@
+ 
+     ret = av_read_frame(v->ctx, v->pkt);
+     if (!ret) {
+-        return ret;
+-    }
++        struct segment *seg = current_segment(v);
++        if (!seg) return AVERROR_INVALIDDATA;
++        v->subtitle_packet_epoch = seg->epoch_id;
++        v->subtitle_packet_unshifted = 1;
++        return 0;
++    }
++    if (ret != AVERROR_EOF) return ret;
++    if (ff_check_interrupt(c->interrupt_callback)) return AVERROR_EXIT;
++    if (v->pb.pub.error < 0 && v->pb.pub.error != AVERROR_EOF) return v->pb.pub.error;
+     ff_format_io_close(v->parent, &v->input);
+     v->cur_seq_no++;
+     c->cur_seq_no = v->cur_seq_no;
+@@ -1865,6 +2100,115 @@
+     avformat_close_input(&v->ctx);
+ 
+     goto restart;
++}
++
++/* Private, versioned-with-the-host bridge. It primes only the selected
++ * rendition from its retained header window before any primary packet is
++ * handed to the consumer. Existing A/V probe packets remain owned, in order.
++ * No live media seek or assumption of equal media sequence numbers is used. */
++int avpriv_nsurator_hls_timeline_version(void);
++int avpriv_nsurator_hls_prime_initial_subtitle(AVFormatContext *s, int stream_index, int64_t target);
++
++int avpriv_nsurator_hls_timeline_version(void) { return 1; }
++
++int avpriv_nsurator_hls_prime_initial_subtitle(AVFormatContext *s, int stream_index,
++                                              int64_t target)
++{
++    if (!s || !s->iformat || strcmp(s->iformat->name, "hls") || stream_index < 0 ||
++        stream_index >= s->nb_streams || target == AV_NOPTS_VALUE)
++        return AVERROR(EINVAL);
++    HLSContext *c = s->priv_data;
++    struct playlist *pls = NULL;
++    int local_index = -1;
++    for (int n = 0; n < c->n_playlists; n++)
++        for (int j = 0; c->playlists[n]->is_subtitle && j < c->playlists[n]->n_main_streams; j++)
++            if (c->playlists[n]->main_streams[j]->index == stream_index) {
++                pls = c->playlists[n]; local_index = j;
++            }
++    if (!pls || !pls->n_segments) return AVERROR_INVALIDDATA;
++    if (pls->needed) return 0; /* selected before probing; already queued */
++    PacketList *queue = &ffformatcontext(s)->packet_buffer;
++    int64_t upper = target;
++    for (PacketListEntry *node = queue->head; node; node = node->next) {
++        AVPacket *p = &node->pkt;
++        if (p->stream_index < 0 || p->stream_index >= s->nb_streams) return AVERROR_INVALIDDATA;
++        int64_t pts = p->pts != AV_NOPTS_VALUE ? p->pts : p->dts;
++        if (pts != AV_NOPTS_VALUE)
++            upper = FFMAX(upper, av_rescale_q(pts, s->streams[p->stream_index]->time_base, AV_TIME_BASE_Q));
++    }
++    PacketList additions = {0};
++    int64_t saved_sequence = c->cur_seq_no;
++    int64_t deadline = av_gettime_relative() + 3 * AV_TIME_BASE;
++    size_t bytes = 0;
++    int ret = 0;
++    pls->needed = 1;
++    pls->cur_seq_no = pls->start_seq_no;
++    pls->seek_timestamp = AV_NOPTS_VALUE;
++    pls->priming_retained_subtitle_window = 1;
++    for (int count = 0; ; count++) {
++        if (count >= 4096 || av_gettime_relative() >= deadline) { ret = AVERROR(ETIMEDOUT); break; }
++        if (ff_check_interrupt(c->interrupt_callback)) { ret = AVERROR_EXIT; break; }
++        ret = read_subtitle_packet(pls, pls->pkt);
++        if (ret == AVERROR_EOF || ret == AVERROR(EAGAIN)) { ret = 0; break; }
++        if (ret < 0) break;
++        ret = shift_subtitle_epoch_packet(pls);
++        if (ret == AVERROR(EAGAIN)) { ret = 0; break; }
++        if (ret < 0) break;
++        AVPacket *p = pls->pkt;
++        if (p->stream_index != local_index || p->pts == AV_NOPTS_VALUE || p->duration <= 0) {
++            ret = AVERROR_INVALIDDATA; break;
++        }
++        AVRational time_base = pls->ctx->streams[local_index]->time_base;
++        int64_t pts = av_rescale_q(p->pts, time_base, AV_TIME_BASE_Q);
++        int64_t duration = av_rescale_q(p->duration, time_base, AV_TIME_BASE_Q);
++        if (pts == AV_NOPTS_VALUE || duration <= 0 ||
++            pts > INT64_MAX - duration) { ret = AVERROR_INVALIDDATA; break; }
++        if (av_cmp_q(time_base, s->streams[stream_index]->time_base)) {
++            ret = AVERROR_INVALIDDATA; break;
++        }
++        if (pts + duration <= target) { av_packet_unref(p); continue; }
++        if (pts > upper) break; /* keep this local-stream packet for hls_read_packet */
++        size_t size = p->size;
++        for (int n = 0; n < p->side_data_elems; n++) {
++            if (p->side_data[n].size > 4 * 1024 * 1024 - FFMIN(size, 4 * 1024 * 1024)) {
++                ret = AVERROR(ENOSPC); break;
++            }
++            size += p->side_data[n].size;
++        }
++        if (ret < 0) break;
++        if (size > 4 * 1024 * 1024 - bytes) { ret = AVERROR(ENOSPC); break; }
++        bytes += size;
++        p->stream_index = stream_index;
++        ret = avpriv_packet_list_put(&additions, p, NULL, 0);
++        if (ret < 0) break;
++    }
++    c->cur_seq_no = saved_sequence;
++    pls->priming_retained_subtitle_window = 0;
++    if (ret < 0) {
++        avpriv_packet_list_free(&additions);
++        av_packet_unref(pls->pkt);
++        ff_format_io_close(pls->parent, &pls->input);
++        avformat_close_input(&pls->ctx);
++        pls->needed = 0;
++        return ret;
++    }
++    while (additions.head) {
++        PacketListEntry *node = additions.head;
++        additions.head = node->next;
++        PacketListEntry **position = &queue->head;
++        while (*position) {
++            AVPacket *other = &(*position)->pkt;
++            int64_t pts = other->pts != AV_NOPTS_VALUE ? other->pts : other->dts;
++            if (pts != AV_NOPTS_VALUE && av_compare_ts(node->pkt.pts,
++                    s->streams[stream_index]->time_base, pts,
++                    s->streams[other->stream_index]->time_base) <= 0) break;
++            position = &(*position)->next;
++        }
++        node->next = *position;
++        *position = node;
++        if (!node->next) queue->tail = node;
++    }
++    return 0;
+ }
+ 
+ static void add_renditions_to_variant(HLSContext *c, struct variant *var,
+@@ -1930,6 +2274,11 @@
+     int i;
+     int64_t pos = c->first_timestamp == AV_NOPTS_VALUE ?
+                   0 : c->first_timestamp;
++    if (pls->n_segments) {
++        int64_t first = pls->segments[0]->timeline_start;
++        if (pos > INT64_MAX - first) return 0;
++        pos += first;
++    }
+ 
+     if (timestamp < pos) {
+         *seq_no = pls->start_seq_no;
+@@ -2274,10 +2623,10 @@
+             return AVERROR(ENOMEM);
+         }
+ 
+-        if (pls->is_subtitle)
+-            ffio_init_context(&pls->pb, (unsigned char*)av_strdup("WEBVTT\n"), (int)strlen("WEBVTT\n"), 0, pls,
+-                                       NULL, NULL, NULL);
+-        else
++        if (pls->is_subtitle) {
++            memcpy(pls->read_buffer, "WEBVTT\n", 7);
++            ffio_init_context(&pls->pb, pls->read_buffer, 7, 0, pls, NULL, NULL, NULL);
++        } else
+             ffio_init_context(&pls->pb, pls->read_buffer, INITIAL_BUFFER_SIZE, 0, pls,
+                                         read_data_continuous, NULL, NULL);
+ 
+@@ -2377,6 +2726,8 @@
+             return ret;
+ 
+         av_dict_copy(&options, c->seg_format_opts, 0);
++        if (pls->is_subtitle)
++            av_dict_set(&options, "hls_timestamp_map", "1", 0);
+ 
+         ret = avformat_open_input(&pls->ctx, pls->segments[0]->url, in_fmt, &options);
+         av_dict_free(&options);
+@@ -2399,7 +2750,10 @@
+          * but for other streams we can rely on our user calling avformat_find_stream_info()
+          * on us if they want to.
+          */
+-        if (pls->is_id3_timestamped || (pls->n_renditions > 0 && pls->renditions[0]->type == AVMEDIA_TYPE_AUDIO)) {
++        /* Establish real per-stream sample rates/durations before exporting
++         * epoch sample boundaries. The subdemuxer's bounded probe queue is
++         * retained and consumed by the outer stream-info scan. */
++        if (!pls->is_subtitle) {
+             seg = current_segment(pls);
+             if (seg && seg->key_type == KEY_SAMPLE_AES && pls->audio_setup_info.setup_data_length > 0 &&
+                 pls->ctx->nb_streams == 1)
+@@ -2526,6 +2880,276 @@
+     return av_compare_mod(scaled_ts_a, scaled_ts_b, 1LL << 33);
+ }
+ 
++static int64_t epoch_presentation_start(AVFormatContext *s)
++{
++    int64_t start = AV_NOPTS_VALUE;
++    for (unsigned n = 0; n < s->nb_streams; n++) {
++        AVStream *st = s->streams[n];
++        if (st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && st->start_time != AV_NOPTS_VALUE)
++            return av_rescale_q(st->start_time, st->time_base, AV_TIME_BASE_Q);
++    }
++    for (unsigned n = 0; n < s->nb_streams; n++) {
++        AVStream *st = s->streams[n];
++        if ((st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO || st->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) &&
++            st->start_time != AV_NOPTS_VALUE) {
++            int64_t value = av_rescale_q(st->start_time, st->time_base, AV_TIME_BASE_Q);
++            if (start == AV_NOPTS_VALUE || value < start) start = value;
++        }
++    }
++    return start;
++}
++
++static int validate_epoch_end(struct playlist *pls, int64_t boundary)
++{
++    for (unsigned n = 0; n < pls->ctx->nb_streams; n++) {
++        if (n >= 64) return AVERROR(ENOSPC);
++        if (!pls->observed_end_valid[n] || !pls->stream_origin_valid[n]) continue;
++        if (pls->stream_origins[n] > INT64_MAX - boundary) return AVERROR_INVALIDDATA;
++        int64_t expected = pls->stream_origins[n] + boundary;
++        int64_t tolerance = FFMIN(250000, FFMAX(10000, pls->maximum_packet_duration[n])) * 2;
++        if (av_sat_sub64(pls->observed_end[n], expected) > tolerance || av_sat_sub64(expected, pls->observed_end[n]) > tolerance)
++            return AVERROR_INVALIDDATA;
++    }
++    return 0;
++}
++
++static int reopen_discontinuity_epoch(struct playlist *pls)
++{
++    const AVInputFormat *format = pls->ctx->iformat;
++    HLSContext *c = pls->parent->priv_data;
++    struct segment *seg = current_segment(pls);
++    AVDictionary *options = NULL;
++    int ret;
++    int64_t start;
++    if (!seg) return AVERROR_INVALIDDATA;
++    if ((ret = validate_epoch_end(pls, seg->timeline_start)) < 0) return ret;
++    if (!pls->epoch_origin_valid) {
++        start = epoch_presentation_start(pls->ctx);
++        if (start == AV_NOPTS_VALUE || start < INT64_MIN + pls->epoch_started_at)
++            return AVERROR_INVALIDDATA;
++        pls->epoch_origin = start - pls->epoch_started_at;
++        pls->epoch_origin_valid = 1;
++    }
++    for (unsigned n = 0; n < pls->ctx->nb_streams; n++) {
++        if (n >= 64) return AVERROR(ENOSPC);
++        if (!pls->stream_origin_valid[n] && pls->ctx->streams[n]->start_time != AV_NOPTS_VALUE) {
++            pls->stream_origins[n] = av_rescale_q(pls->ctx->streams[n]->start_time,
++                pls->ctx->streams[n]->time_base, AV_TIME_BASE_Q) - pls->epoch_started_at;
++            int64_t epoch_ticks = av_rescale_q(pls->epoch_started_at, AV_TIME_BASE_Q, pls->ctx->streams[n]->time_base);
++            if (epoch_ticks < 0 || pls->ctx->streams[n]->start_time < INT64_MIN + epoch_ticks)
++                return AVERROR_INVALIDDATA;
++            pls->stream_origin_ticks[n] = pls->ctx->streams[n]->start_time - epoch_ticks;
++            pls->stream_origin_valid[n] = 1;
++        }
++    }
++    ff_format_io_close(pls->parent, &pls->input);
++    ff_format_io_close(pls->parent, &pls->input_next);
++    pls->input_read_done = 0;
++    pls->input_next_requested = 0;
++    pls->ctx->pb = NULL;
++    avformat_close_input(&pls->ctx);
++    av_freep(&pls->pb.pub.buffer);
++    pls->read_buffer = av_malloc(INITIAL_BUFFER_SIZE);
++    if (!pls->read_buffer) return AVERROR(ENOMEM);
++    ffio_init_context(&pls->pb, pls->read_buffer, INITIAL_BUFFER_SIZE, 0, pls,
++                      read_data_continuous, NULL, NULL);
++    pls->pb.pub.seekable = 0;
++    pls->cur_init_section = NULL;
++    pls->init_sec_data_len = pls->init_sec_buf_read_offset = 0;
++    pls->epoch_id = seg->epoch_id;
++    pls->epoch_started_at = seg->timeline_start;
++    pls->epoch_boundary = 0;
++    memset(pls->raw_next_valid, 0, sizeof(pls->raw_next_valid));
++    memset(pls->observed_end_valid, 0, sizeof(pls->observed_end_valid));
++    memset(pls->maximum_packet_duration, 0, sizeof(pls->maximum_packet_duration));
++    pls->ctx = avformat_alloc_context();
++    if (!pls->ctx) return AVERROR(ENOMEM);
++    pls->ctx->pb = &pls->pb.pub;
++    pls->ctx->io_open = nested_io_open;
++    pls->ctx->interrupt_callback = pls->parent->interrupt_callback;
++    pls->ctx->probesize = pls->parent->probesize;
++    pls->ctx->max_analyze_duration = pls->parent->max_analyze_duration;
++    if ((ret = ff_copy_whiteblacklists(pls->ctx, pls->parent)) < 0) return ret;
++    av_dict_copy(&options, c->seg_format_opts, 0);
++    ret = avformat_open_input(&pls->ctx, seg->url, format, &options);
++    av_dict_free(&options);
++    if (ret < 0) return ret;
++    if ((ret = avformat_find_stream_info(pls->ctx, NULL)) < 0) return ret;
++    start = epoch_presentation_start(pls->ctx);
++    if (start == AV_NOPTS_VALUE || pls->epoch_origin > INT64_MAX - pls->epoch_started_at)
++        return AVERROR_INVALIDDATA;
++    int64_t target = pls->epoch_origin + pls->epoch_started_at;
++    if ((start < 0 && target > INT64_MAX + start) || (start > 0 && target < INT64_MIN + start))
++        return AVERROR_INVALIDDATA;
++    pls->epoch_offset = target - start;
++    if ((ret = remember_epoch_clock(pls, pls->epoch_id, pls->epoch_offset, start)) < 0) return ret;
++    if (pls->ctx->nb_streams != pls->n_main_streams) return AVERROR_INVALIDDATA;
++    for (unsigned n = 0; n < pls->ctx->nb_streams; n++) {
++        AVStream *fresh = pls->ctx->streams[n], *main = pls->main_streams[n];
++        if (fresh->codecpar->codec_id != main->codecpar->codec_id ||
++            av_cmp_q(fresh->time_base, main->time_base))
++            return AVERROR_INVALIDDATA;
++    }
++    return 0;
++}
++
++/* Before a packet straddles the last advertised segment, learn whether its
++ * successor starts a new epoch. This barrier occurs before returning that
++ * packet to a decoder or render queue. A late live refresh stalls here with
++ * interrupt/deadline checks; it cannot retroactively alter scheduled PCM. */
++static int ensure_epoch_successor(struct playlist *pls, int stream_index)
++{
++    HLSContext *c = pls->parent->priv_data;
++    if (pls->finished || !pls->n_segments || !pls->stream_origin_valid[stream_index]) return 0;
++    AVStream *st = pls->ctx->streams[stream_index];
++    AVPacket *pkt = pls->pkt;
++    if (pkt->pts == AV_NOPTS_VALUE || pkt->duration <= 0) return AVERROR_INVALIDDATA;
++    int64_t packet_start = av_rescale_q(pkt->pts, st->time_base, AV_TIME_BASE_Q);
++    int64_t packet_duration = av_rescale_q(pkt->duration, st->time_base, AV_TIME_BASE_Q);
++    if (packet_start > INT64_MAX - packet_duration) return AVERROR_INVALIDDATA;
++    int64_t packet_end = packet_start + packet_duration;
++    int64_t deadline = av_gettime_relative() + 10 * AV_TIME_BASE;
++    int reloads = 0;
++    for (;;) {
++        struct segment *last = pls->segments[pls->n_segments - 1];
++        int64_t window_end = last->timeline_start + last->duration;
++        if (pls->stream_origins[stream_index] > INT64_MAX - window_end) return AVERROR_INVALIDDATA;
++        window_end += pls->stream_origins[stream_index];
++        if (pls->finished || packet_end < window_end) return 0;
++        if (ff_check_interrupt(c->interrupt_callback)) return AVERROR_EXIT;
++        if (av_gettime_relative() >= deadline || ++reloads > c->max_reload) return AVERROR(ETIMEDOUT);
++        int64_t interval = FFMIN(AV_TIME_BASE, FFMAX(100000, pls->target_duration / 2));
++        while (av_gettime_relative() - pls->last_load_time < interval) {
++            if (ff_check_interrupt(c->interrupt_callback)) return AVERROR_EXIT;
++            if (av_gettime_relative() >= deadline) return AVERROR(ETIMEDOUT);
++            av_usleep(10000);
++        }
++        int ret = parse_playlist(c, pls->url, pls, NULL);
++        if (ret < 0) return ret;
++    }
++}
++
++static int epoch_audio_bounds(struct playlist *pls)
++{
++    AVPacket *pkt = pls->pkt;
++    int index = pkt->stream_index;
++    if (index < 0 || index >= 64) return AVERROR(ENOSPC);
++    AVStream *st = pls->ctx->streams[index];
++    if (st->codecpar->codec_type != AVMEDIA_TYPE_AUDIO && st->codecpar->codec_type != AVMEDIA_TYPE_VIDEO) return 0;
++    if (!pls->stream_origin_valid[index] && st->start_time != AV_NOPTS_VALUE) {
++        pls->stream_origins[index] = av_rescale_q(st->start_time, st->time_base, AV_TIME_BASE_Q) - pls->epoch_started_at;
++        int64_t epoch_ticks = av_rescale_q(pls->epoch_started_at, AV_TIME_BASE_Q, st->time_base);
++        if (epoch_ticks < 0 || st->start_time < INT64_MIN + epoch_ticks) return AVERROR_INVALIDDATA;
++        pls->stream_origin_ticks[index] = st->start_time - epoch_ticks;
++        pls->stream_origin_valid[index] = 1;
++    }
++    if (pkt->pts != AV_NOPTS_VALUE && pkt->duration > 0) {
++        int64_t start = av_rescale_q(pkt->pts, st->time_base, AV_TIME_BASE_Q);
++        int64_t duration = av_rescale_q(pkt->duration, st->time_base, AV_TIME_BASE_Q);
++        if (start > INT64_MAX - duration) return AVERROR_INVALIDDATA;
++        int64_t end = start + duration;
++        if (!pls->observed_end_valid[index] || end > pls->observed_end[index]) pls->observed_end[index] = end;
++        pls->observed_end_valid[index] = 1;
++        pls->maximum_packet_duration[index] = FFMAX(pls->maximum_packet_duration[index], duration);
++    }
++    int ret = ensure_epoch_successor(pls, index);
++    if (ret < 0) return ret;
++    if (st->codecpar->codec_type != AVMEDIA_TYPE_AUDIO || !pls->stream_origin_valid[index]) return 0;
++    int64_t boundary = AV_NOPTS_VALUE;
++    for (int n = 0; n < pls->n_segments; n++) {
++        if (pls->segments[n]->epoch_id > pls->epoch_id) {
++            boundary = pls->segments[n]->timeline_start; break;
++        }
++    }
++    if (boundary == AV_NOPTS_VALUE && pls->finished && pls->has_discontinuity && pls->n_segments) {
++        struct segment *last = pls->segments[pls->n_segments-1];
++        boundary = last->timeline_start + last->duration;
++    }
++    if (boundary == AV_NOPTS_VALUE) return 0;
++    int sample_rate = st->codecpar->sample_rate;
++    if (pkt->pts == AV_NOPTS_VALUE || pkt->duration <= 0 || sample_rate <= 0) return AVERROR_INVALIDDATA;
++    AVRational sample_time = {1, sample_rate};
++    int64_t first = av_rescale_q(pkt->pts, st->time_base, sample_time);
++    int64_t count = av_rescale_q(pkt->duration, st->time_base, sample_time);
++    /* Round the measured stream origin once in its sample time base. Rounding
++     * a negative MPEG wrap origin to microseconds and then flooring the sum
++     * would remove one real PCM sample at every epoch boundary. */
++    int64_t origin_samples = av_rescale_q(pls->stream_origin_ticks[index], st->time_base, sample_time);
++    int64_t span_samples = av_rescale_q_rnd(boundary, AV_TIME_BASE_Q, sample_time, AV_ROUND_DOWN);
++    if (origin_samples == AV_NOPTS_VALUE || span_samples < 0 || origin_samples > INT64_MAX - span_samples)
++        return AVERROR_INVALIDDATA;
++    int64_t end = origin_samples + span_samples;
++    if (count <= 0 || count > UINT32_MAX || first > INT64_MAX - count) return AVERROR_INVALIDDATA;
++    int64_t trim = first >= end ? count : FFMAX(0, first + count - end);
++    if (!trim) return 0;
++    size_t size = 0;
++    uint8_t *skip = av_packet_get_side_data(pkt, AV_PKT_DATA_SKIP_SAMPLES, &size);
++    if (skip && size < 10) return AVERROR_INVALIDDATA;
++    if (!skip) {
++        skip = av_packet_new_side_data(pkt, AV_PKT_DATA_SKIP_SAMPLES, 10);
++        if (!skip) return AVERROR(ENOMEM);
++        memset(skip, 0, 10);
++    }
++    AV_WL32(skip + 4, FFMAX((uint32_t)trim, AV_RL32(skip + 4)));
++    skip[9] = 1; /* convergence at an explicit presentation boundary */
++    return 0;
++}
++
++static int shift_epoch_packet(struct playlist *pls)
++{
++    AVPacket *pkt = pls->pkt;
++    int stream_index = pkt->stream_index;
++    if (stream_index < 0 || stream_index >= 64) return AVERROR(ENOSPC);
++    AVStream *stream = pls->ctx->streams[stream_index];
++    int64_t reference = pkt->pts != AV_NOPTS_VALUE ? pkt->pts : pkt->dts;
++    if (reference != AV_NOPTS_VALUE) {
++        int ret = remember_epoch_clock(pls, pls->epoch_id, pls->epoch_offset,
++            av_rescale_q(reference, stream->time_base, AV_TIME_BASE_Q));
++        if (ret < 0) return ret;
++    }
++    if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
++        /* Packets buffered before probing established frame_size may still
++         * have zero duration or omit redundant audio timestamps. Complete
++         * them from the now-known codec frame duration and preceding packet. */
++        if (pkt->duration <= 0 && stream->codecpar->sample_rate > 0) {
++            int samples = av_get_audio_frame_duration2(stream->codecpar, pkt->size);
++            if (samples > 0) pkt->duration = av_rescale_q(samples,
++                (AVRational){1, stream->codecpar->sample_rate}, stream->time_base);
++        }
++        if (pkt->pts == AV_NOPTS_VALUE && pls->raw_next_valid[stream_index])
++            pkt->pts = pls->raw_next_pts[stream_index];
++        if (pkt->dts == AV_NOPTS_VALUE) pkt->dts = pkt->pts;
++        if (pkt->pts != AV_NOPTS_VALUE && pkt->duration > 0) {
++            if (pkt->pts > INT64_MAX - pkt->duration) return AVERROR_INVALIDDATA;
++            pls->raw_next_pts[stream_index] = pkt->pts + pkt->duration;
++            pls->raw_next_valid[stream_index] = 1;
++        }
++    }
++    AVDictionary *metadata = NULL;
++    size_t size = 0;
++    uint8_t *previous = av_packet_get_side_data(pkt, AV_PKT_DATA_STRINGS_METADATA, &size);
++    if (previous && av_packet_unpack_dictionary(previous, size, &metadata) < 0) {
++        av_dict_free(&metadata); return AVERROR_INVALIDDATA;
++    }
++    av_dict_set_int(&metadata, "npc_hls_epoch", pls->epoch_id, 0);
++    uint8_t *packed = av_packet_pack_dictionary(metadata, &size);
++    av_dict_free(&metadata);
++    if (!packed) return AVERROR(ENOMEM);
++    if (av_packet_add_side_data(pkt, AV_PKT_DATA_STRINGS_METADATA, packed, size) < 0) {
++        av_free(packed); return AVERROR(ENOMEM);
++    }
++    int64_t shift = av_rescale_q(pls->epoch_offset, AV_TIME_BASE_Q, get_timebase(pls));
++    int64_t *timestamps[] = { &pkt->pts, &pkt->dts };
++    for (int n = 0; n < 2; n++) {
++        int64_t ts = *timestamps[n];
++        if (ts == AV_NOPTS_VALUE) continue;
++        if ((shift > 0 && ts > INT64_MAX - shift) || (shift < 0 && ts < INT64_MIN - shift))
++            return AVERROR_INVALIDDATA;
++        *timestamps[n] = ts + shift;
++    }
++    return epoch_audio_bounds(pls);
++}
++
+ static int hls_read_packet(AVFormatContext *s, AVPacket *pkt)
+ {
+     HLSContext *c = s->priv_data;
+@@ -2534,8 +3158,10 @@
+     recheck_discard_flags(s, c->first_packet);
+     c->first_packet = 0;
+ 
+-    for (i = 0; i < c->n_playlists; i++) {
++    for (int step = 0; step < c->n_playlists * 2; step++) {
++        i = step % c->n_playlists;
+         struct playlist *pls = c->playlists[i];
++        if ((step < c->n_playlists) == !!pls->is_subtitle) continue;
+         /* Make sure we've got one buffered packet from each open playlist
+          * stream */
+         if (pls->needed && !pls->pkt->data) {
+@@ -2548,8 +3174,18 @@
+                 else
+                     ret = av_read_frame(pls->ctx, pls->pkt);
+                 if (ret < 0) {
+-                    if (!avio_feof(&pls->pb.pub) && ret != AVERROR_EOF)
++                    if (pls->is_subtitle && ret == AVERROR(EAGAIN)) break;
++                    if (ret == AVERROR_EOF && pls->epoch_boundary && !pls->is_subtitle) {
++                        if ((ret = reopen_discontinuity_epoch(pls)) < 0) return ret;
++                        continue;
++                    }
++                    if ((pls->is_subtitle || !avio_feof(&pls->pb.pub)) && ret != AVERROR_EOF)
+                         return ret;
++                    if (ret == AVERROR_EOF && !pls->is_subtitle && pls->finished && pls->n_segments) {
++                        struct segment *last = pls->segments[pls->n_segments - 1];
++                        int validation = validate_epoch_end(pls, last->timeline_start + last->duration);
++                        if (validation < 0) return validation;
++                    }
+                     break;
+                 } else {
+                     /* stream_index check prevents matching picture attachments etc. */
+@@ -2558,7 +3194,12 @@
+                         fill_timing_for_id3_timestamped_stream(pls);
+                     }
+ 
+-                    if (c->first_timestamp == AV_NOPTS_VALUE &&
++                    if (!pls->is_subtitle && (ret = shift_epoch_packet(pls)) < 0) {
++                        av_packet_unref(pls->pkt);
++                        return ret;
++                    }
++
++                    if (!pls->is_subtitle && c->first_timestamp == AV_NOPTS_VALUE &&
+                         pls->pkt->dts       != AV_NOPTS_VALUE)
+                         c->first_timestamp = av_rescale_q(pls->pkt->dts,
+                             get_timebase(pls), AV_TIME_BASE_Q);
+@@ -2572,7 +3213,7 @@
+                     ff_hls_senc_decrypt_frame(codec_id, &c->crypto_ctx, pls->pkt);
+                 }
+ 
+-                if (pls->seek_timestamp == AV_NOPTS_VALUE)
++                if (pls->is_subtitle || pls->seek_timestamp == AV_NOPTS_VALUE)
+                     break;
+ 
+                 if (pls->seek_stream_index < 0 ||
+@@ -2596,6 +3237,24 @@
+                 av_packet_unref(pls->pkt);
+             }
+         }
++        if (pls->is_subtitle && pls->pkt->data) {
++            ret = shift_subtitle_epoch_packet(pls);
++            if (ret == AVERROR(EAGAIN)) continue;
++            if (ret < 0) return ret;
++            if (pls->seek_timestamp != AV_NOPTS_VALUE) {
++                int64_t pts = pls->pkt->pts;
++                AVRational tb = get_timebase(pls);
++                /* Keep the cue spanning the seek position, not only cues that
++                 * begin afterwards. Seek never mutates the mapped cue bounds. */
++                if (pts == AV_NOPTS_VALUE || pls->pkt->duration <= 0 || pts > INT64_MAX - pls->pkt->duration)
++                    return AVERROR_INVALIDDATA;
++                if (av_compare_ts(pts + pls->pkt->duration, tb, pls->seek_timestamp, AV_TIME_BASE_Q) <= 0) {
++                    av_packet_unref(pls->pkt);
++                    step--; continue;
++                }
++                pls->seek_timestamp = AV_NOPTS_VALUE;
++            }
++        }
+         /* Check if this stream has the packet with the lowest dts */
+         if (pls->pkt->data) {
+             struct playlist *minpls = minplaylist < 0 ?
+@@ -2671,6 +3330,10 @@
+ 
+         return 0;
+     }
++    for (int n = 0; n < c->n_playlists; n++)
++        if (c->playlists[n]->needed && c->playlists[n]->is_subtitle &&
++            (c->playlists[n]->pkt->data || c->playlists[n]->subtitle_waiting_for_epoch))
++            return AVERROR_INVALIDDATA; /* media ended before a required epoch clock */
+     return AVERROR_EOF;
+ }
+ 
+@@ -2694,9 +3357,9 @@
+                                     s->streams[stream_index]->time_base.den,
+                                     AV_ROUND_DOWN);
+ 
+-    /* The audio presentation can begin before the first demuxed video
+-     * packet. Permit exactly that known origin interval for an initial rewind;
+-     * timestamps before the actual format origin remain invalid. */
++    /* Audio can precede the first demuxed video packet. Accept the format's
++     * real presentation origin instead of rejecting an initial rewind before
++     * c->first_timestamp. Never extend the seek range before that origin. */
+     if (s->start_time != AV_NOPTS_VALUE &&
+         seek_timestamp >= s->start_time && seek_timestamp < first_timestamp)
+         seek_timestamp = first_timestamp;
+@@ -2757,6 +3420,9 @@
+         /* Reset the init segment so it's re-fetched and served appropriately */
+         pls->cur_init_section = NULL;
+ 
++        memset(pls->raw_next_valid, 0, sizeof(pls->raw_next_valid));
++        memset(pls->observed_end_valid, 0, sizeof(pls->observed_end_valid));
++        memset(pls->maximum_packet_duration, 0, sizeof(pls->maximum_packet_duration));
+         pls->seek_timestamp = seek_timestamp;
+         pls->seek_flags = flags;
+ 

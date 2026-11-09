@@ -1,0 +1,5 @@
+coreRevision=d00b24fa7a855e3db9dcbb998876837f31c6e45e
+coreDirty=0
+Xcode 27.1 Build version 27A9275 
+Apple clang version 21.0.0 (clang-2100.3.34.2)
+meson=1.11.2

@@ -1,0 +1,1 @@
+Build Options: -Dbuildtype=release -Dprefix=$WORK/dependencies/iphonesimulator-arm64 -Dlibdir=lib -Ddefault_library=static -Denable_tools=false -Denable_tests=false -Denable_examples=false -Denable_docs=false -Dwrap_mode=nodownload --cross-file=$WORK/dav1d-build/iphonesimulator-arm64/dav1d-iphonesimulator-arm64.cross

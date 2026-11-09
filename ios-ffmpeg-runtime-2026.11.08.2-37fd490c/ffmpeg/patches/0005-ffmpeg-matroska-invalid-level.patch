@@ -1,0 +1,25 @@
+diff --git a/libavformat/matroskadec.c b/libavformat/matroskadec.c
+--- a/libavformat/matroskadec.c
++++ b/libavformat/matroskadec.c
+@@ -4269,7 +4269,9 @@ static int matroska_parse_cluster(MatroskaDemuxContext *matroska)
+     MatroskaBlock     *block = &cluster->block;
+     int res;
+ 
+-    av_assert0(matroska->num_levels <= 2U);
++    if (matroska->num_levels > 2) {
++        return AVERROR_INVALIDDATA;
++    }
+ 
+     if (matroska->num_levels == 1) {
+         res = ebml_parse(matroska, matroska_segment, NULL);
+@@ -4363,7 +4365,9 @@ static int matroska_read_seek(AVFormatContext *s, int stream_index,
+ 
+     if ((index = av_index_search_timestamp(st, timestamp, flags)) < 0 ||
+          index == sti->nb_index_entries - 1) {
+-        matroska_reset_status(matroska, 0, sti->index_entries[sti->nb_index_entries - 1].pos);
++        if (matroska_reset_status(matroska, 0, sti->index_entries[sti->nb_index_entries - 1].pos) < 0) {
++            goto err;
++        }
+         while ((index = av_index_search_timestamp(st, timestamp, flags)) < 0 ||
+                index == sti->nb_index_entries - 1) {
+             matroska_clear_queue(matroska);

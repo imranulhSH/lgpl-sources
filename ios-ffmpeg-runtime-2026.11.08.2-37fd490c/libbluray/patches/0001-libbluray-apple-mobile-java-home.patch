@@ -1,0 +1,30 @@
+--- a/src/libbluray/bdj/bdj.c
++++ b/src/libbluray/bdj/bdj.c
+@@ -40,6 +40,7 @@
+ #include <string.h>
+ 
+ #ifdef __APPLE__
++#include <TargetConditionals.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
+ #include <limits.h>
+@@ -243,6 +244,11 @@
+ #define MACOS_JAVA_HOME "/usr/libexec/java_home"
+ static char *_java_home_macos()
+ {
++#if !TARGET_OS_OSX
++    /* NPC_LIBBLURAY_NO_MOBILE_JAVA_HOME: Apple mobile targets cannot spawn
++     * /usr/libexec/java_home. No JVM is provided by this artifact. */
++    return NULL;
++#else
+     static char result[PATH_MAX] = "";
+ 
+     if (result[0])
+@@ -298,6 +304,7 @@
+ 
+     BD_DEBUG(DBG_BDJ, "macos java home: '%s'\n", result );
+     return result;
++#endif
+ }
+ #undef MACOS_JAVA_HOME
+ 

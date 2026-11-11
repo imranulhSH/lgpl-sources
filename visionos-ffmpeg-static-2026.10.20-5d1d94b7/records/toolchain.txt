@@ -1,0 +1,6 @@
+Xcode 27.0 (27A266a), visionOS (XROS) 27.0 SDK
+Apple clang version 21.0.0 (clang-2100.3.34.2), target arm64-apple-xros27.0
+meson 1.12.1, ninja 1.13.2 (as the build's meson logs record them)
+pkg-config: pkgconf 3.0.7 (pkgconf-pypi 3.0.7.post0), from the same Python environment
+  (read 2026-11-10; the build did not log its version)
+built 2026-10-20T17:09:44Z (xros-arm64)

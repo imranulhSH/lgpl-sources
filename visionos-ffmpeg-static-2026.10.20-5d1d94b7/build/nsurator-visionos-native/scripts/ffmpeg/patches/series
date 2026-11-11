@@ -1,0 +1,24 @@
+# Applied in this order by scripts/build_ffmpeg_visionos.sh (patch -p1, fail closed).
+# Copied unchanged from nsurator-player-core-tvos (8d6807cb) scripts/patches/, except
+# ffmpeg-mov-channel-layout-status.patch: player-core main's form (5dff3277, from 4a5b76d6,
+# FFmpeg upstream's fail-soft fix: a malformed chnl box is skipped), since 2026-10-20 (V-D27).
+# component  patch-file
+ffmpeg     ffmpeg-hls-child-network-options.patch
+ffmpeg     ffmpeg-securetransport-trust-errors.patch
+ffmpeg     ffmpeg-libssh-host-key-verification.patch
+ffmpeg     ffmpeg-matroska-interrupt-exit.patch
+ffmpeg     ffmpeg-matroska-invalid-level.patch
+ffmpeg     ffmpeg-http-stale-auth-retry.patch
+ffmpeg     ffmpeg-network-dns-error.patch
+ffmpeg     ffmpeg-hls-presentation-origin-seek.patch
+ffmpeg     ffmpeg-hls-timeline-epochs.patch
+ffmpeg     ffmpeg-webvtt-hls-timestamp-map.patch
+ffmpeg     ffmpeg-hls-midplay-subtitle.patch
+ffmpeg     ffmpeg-mov-channel-layout-status.patch
+libbluray  libbluray-apple-mobile-java-home.patch
+libbluray  libbluray-next-coarse-angle-change-point.patch
+libbluray  libbluray-hdmv-menu-button-snapshot.patch
+libbluray  libbluray-disable-decryption-library-loading.patch
+# visionOS port (this repo): OpenGL ES key is unavailable on visionOS; use the
+# Metal key, and treat visionOS like iOS for CVBufferCopyAttachments.
+ffmpeg     ffmpeg-videotoolbox-visionos.patch

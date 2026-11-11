@@ -20,10 +20,11 @@ changes to it, or what is needed to rebuild it.
 | [`ios-ffmpeg-runtime-2026.10.10.1-80fcefa1`](ios-ffmpeg-runtime-2026.10.10.1-80fcefa1/) | Nsurator for iPhone and iPad 1.0.3 (build 103) and 1.0.4 (build 104) | **FFmpeg 8.1.2** (13 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Dynamic framework `NsuratorPlayerCoreFFmpegRuntime.framework` |
 | [`ios-ffmpeg-runtime-2026.11.08.2-37fd490c`](ios-ffmpeg-runtime-2026.11.08.2-37fd490c/) | Nsuve (formerly Nsurator) for iPhone and iPad 1.2.1 (build 127) | **FFmpeg 8.1.2** (14 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Dynamic framework `NsuratorPlayerCoreFFmpegRuntime.framework` |
 | [`ios-ffmpeg-runtime-2026.11.09.1-6e09d2b2`](ios-ffmpeg-runtime-2026.11.09.1-6e09d2b2/) | Nsuve (formerly Nsurator) for iPhone and iPad, from the first build that carries it | **FFmpeg 8.1.2** (15 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Dynamic framework `NsuratorPlayerCoreFFmpegRuntime.framework` |
-| [`ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6`](ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/) | Nsurator for iPhone and iPad 1.0.1 (build 101) | **libsmb2** (2 patches) and **AMSMB2 4.0.3** (1 patch) | Dynamic framework `AMSMB2.framework` |
+| [`ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6`](ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6/) | Nsurator for iPhone and iPad 1.0.1 (build 101); Nsuve for Apple Vision Pro, from its first distributed build (the same sources and patches, built for visionOS) | **libsmb2** (2 patches) and **AMSMB2 4.0.3** (1 patch) | Dynamic framework `AMSMB2.framework` |
 | [`macos-ffmpeg-artifact-2026.09.24.1`](macos-ffmpeg-artifact-2026.09.24.1/) | Nsurator for Mac 5.9.17 (build 8), builds made on or after 2026-09-24 that pin this artifact | **FFmpeg 8.1.2** (7 patches), **libbluray 1.4.1** (3 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable and its decoder helper |
 | [`macos-ffmpeg-artifact-2026.10.09.1`](macos-ffmpeg-artifact-2026.10.09.1/) | Nsurator for Mac builds that pin artifact 2026.10.09.1 (player core `ebfc8a0`, then `0d5c2fe`): the first Mac App Store version after 5.9.17 (build 8) and later | The same libraries as 2026.09.24.1, byte for byte | Dynamic framework `NsuratorPlayerCoreFFmpegRuntime.framework`, loaded by the app executable and its decoder helper |
 | [`macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1`](macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/) | Nsurator for Mac builds made on or after 2026-08-11 (6.9.9 through 6.9.17, and 5.9.17) | **FFmpeg 8.1.2**, **FriBidi 1.0.16**, libass 0.17.5, FreeType 2.14.3, HarfBuzz 14.3.0, libunibreak 7.0, libpng 1.6.58 (all unmodified) | Separate `ffmpeg` and `ffprobe` programs |
+| [`visionos-ffmpeg-static-2026.10.20-5d1d94b7`](visionos-ffmpeg-static-2026.10.20-5d1d94b7/) | Nsuve for Apple Vision Pro, from its first distributed build (none yet) | **FFmpeg 8.1.2** (13 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable |
 
 Each folder's README gives the exact source pins, the configure flags, how to
 rebuild, how to replace the library in the app, and anything we could not pin.
@@ -81,6 +82,8 @@ In short:
   `build/nsurator-player-core-ebfc8a0/scripts/package-apple-ffmpeg-runtime-framework.sh --build`.
 - Mac ffmpeg/ffprobe tools:
   `build/script/build_media_tools_artifact.sh --source-cache <archives> --work-root <new directory>`
+- Apple Vision Pro FFmpeg libraries:
+  `NV_FFMPEG_ARCHIVES=<archives> NV_FFMPEG_SLICES=xros-arm64 build/nsurator-visionos-native/scripts/build_ffmpeg_visionos.sh`
 
 The build scripts in these releases default to a `full` profile that adds
 libraries FFmpeg treats as GPL (from player core `ebfc8a0` on, `base` is the
@@ -111,6 +114,16 @@ Do not use `full` if you want to rebuild what the apps ship.
   app's object files, which are not in this repository. The Nsurator support
   page (https://www.nsurator.com/support.html#oss) explains how to ask for the
   materials needed to relink.
+- **Apple Vision Pro, FFmpeg libraries.** These are linked statically into the
+  app executable. Relinking them needs the app's object files, which are not in
+  this repository; in the app, Settings › About › Open-Source Licenses › Source
+  Code and Relinking Materials says how to ask for them. As on the iPhone and
+  iPad, a relinked app runs only in a copy you sign and install yourself.
+- **Apple Vision Pro, SMB.** AMSMB2 and libsmb2 are the dynamic framework
+  `AMSMB2.framework`, as on the iPhone and iPad: build one for arm64 visionOS
+  from that release's sources, with the same name and install name, put it in
+  the app's `Frameworks` folder, and sign the app again with your own
+  certificate.
 
 On the Mac, a re-signed copy no longer carries the Mac App Store signature, so
 features that depend on it (in-app purchases, and data containers and app
@@ -159,10 +172,11 @@ Nsurator 应用本身不开源，其源代码不在这里。本仓库只包含�
 | `ios-ffmpeg-runtime-2026.10.10.1-80fcefa1` | Nsurator iPhone/iPad 1.0.3（103）和 1.0.4（104） | **FFmpeg 8.1.2**（13 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 动态框架 `NsuratorPlayerCoreFFmpegRuntime.framework` |
 | `ios-ffmpeg-runtime-2026.11.08.2-37fd490c` | Nsuve（原 Nsurator）iPhone/iPad 1.2.1（127） | **FFmpeg 8.1.2**（14 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 动态框架 `NsuratorPlayerCoreFFmpegRuntime.framework` |
 | `ios-ffmpeg-runtime-2026.11.09.1-6e09d2b2` | Nsuve（原 Nsurator）iPhone/iPad，从带它的第一个构建起 | **FFmpeg 8.1.2**（15 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 动态框架 `NsuratorPlayerCoreFFmpegRuntime.framework` |
-| `ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6` | Nsurator iPhone/iPad 1.0.1（101） | **libsmb2**（2 个补丁）、**AMSMB2 4.0.3**（1 个补丁） | 动态框架 `AMSMB2.framework` |
+| `ios-1.0.1-amsmb2-4.0.3-libsmb2-aff9fa6` | Nsurator iPhone/iPad 1.0.1（101）；Nsuve Apple Vision Pro 版，从第一个对外发布的构建起（源码和补丁相同，为 visionOS 构建） | **libsmb2**（2 个补丁）、**AMSMB2 4.0.3**（1 个补丁） | 动态框架 `AMSMB2.framework` |
 | `macos-ffmpeg-artifact-2026.09.24.1` | Nsurator for Mac 5.9.17（build 8），2026-09-24 及之后、固定到此 artifact 的构建 | **FFmpeg 8.1.2**（7 个补丁）、**libbluray 1.4.1**（3 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序和解码辅助进程 |
 | `macos-ffmpeg-artifact-2026.10.09.1` | 固定到 artifact 2026.10.09.1（播放核心 `ebfc8a0`，之后为 `0d5c2fe`）的 Mac 构建：5.9.17（build 8）之后提交的第一个 Mac App Store 版本及以后 | 与 2026.09.24.1 完全相同的库 | 动态框架 `NsuratorPlayerCoreFFmpegRuntime.framework`，由应用主程序和解码辅助进程加载 |
 | `macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1` | 2026-08-11 及之后构建的 Mac 版（6.9.9 至 6.9.17，以及 5.9.17） | **FFmpeg 8.1.2**、**FriBidi 1.0.16**、libass、FreeType、HarfBuzz、libunibreak、libpng（均未修改） | 独立的 `ffmpeg`、`ffprobe` 程序 |
+| `visionos-ffmpeg-static-2026.10.20-5d1d94b7` | Nsuve Apple Vision Pro 版，从第一个对外发布的构建起（尚未发布） | **FFmpeg 8.1.2**（13 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序 |
 
 每个目录的 README 写明了确切的源码版本与哈希、配置参数、重新构建和替换的方法，
 以及无法锁定的部分。
@@ -207,6 +221,12 @@ Mac 构建只有 2026-09-24 及之后的构建对外发布过。
 - **Mac 播放核心中的库（artifact 2026.09.24.1）**：静态链接进应用和解码辅助进程，
   重新链接需要应用的目标文件，本仓库不包含这些文件。获取方式见
   https://www.nsurator.com/support.html#oss 。
+- **Apple Vision Pro 中的 FFmpeg 等库**：静态链接进应用主程序，重新链接需要应用的目标
+  文件，本仓库不包含这些文件，获取方式见应用里的 设置 › 关于 › 开源许可 › 源代码和重新
+  链接材料。和 iPhone、iPad 一样，重新链接的应用只能用在你自己签名安装的副本里。
+- **Apple Vision Pro 中的 SMB**：AMSMB2 和 libsmb2 是动态框架 `AMSMB2.framework`，与
+  iPhone、iPad 相同：用该 Release 的源码为 arm64 visionOS 构建同名、同 install name 的
+  框架，放进应用的 `Frameworks` 目录，再用你自己的证书重新签名应用。
 
 在 Mac 上，重新签名的副本不再带有 Mac App Store 签名，内购、与开发者团队绑定的
 数据容器和 App Group 可能无法使用。

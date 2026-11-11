@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "sources": {
+    "dav1d": {
+      "archiveName": "dav1d-1.5.3.tar.gz",
+      "sha256": "cbe212b02faf8c6eed5b6d55ef8a6e363aaab83f15112e960701a9c3df813686",
+      "url": "https://code.videolan.org/videolan/dav1d/-/archive/1.5.3/dav1d-1.5.3.tar.gz",
+      "version": "1.5.3",
+      "license": "BSD-2-Clause"
+    },
+    "ffmpeg": {
+      "archiveName": "ffmpeg-8.1.2.tar.xz",
+      "sha256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c",
+      "url": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz",
+      "version": "8.1.2",
+      "license": "LGPL-2.1-or-later"
+    },
+    "libbluray": {
+      "archiveName": "libbluray-1.4.1.tar.gz",
+      "sha256": "e22381a313a231d94ddf9180564b36d803f33bdfc7c0b53c03868bc43e5d163d",
+      "url": "https://code.videolan.org/videolan/libbluray/-/archive/1.4.1/libbluray-1.4.1.tar.gz",
+      "version": "1.4.1",
+      "license": "LGPL-2.1-or-later"
+    },
+    "libudfread": {
+      "archiveName": "libudfread-1.2.0.tar.gz",
+      "sha256": "adcce1190925f9d35a477757c5e3f0e221315d14d3d45b4ae62540ea0925f877",
+      "url": "https://code.videolan.org/videolan/libudfread/-/archive/1.2.0/libudfread-1.2.0.tar.gz",
+      "version": "1.2.0",
+      "license": "LGPL-2.1-or-later"
+    }
+  },
+  "platforms": ["xros", "xrsimulator"],
+  "architecture": "arm64",
+  "minimumVisionOSVersion": "27.0",
+  "linkProfile": "base",
+  "swiftpmLinkMode": "static",
+  "requiredRuntimeLibraries": ["libbluray", "libdav1d"],
+  "sourceLockOrigin": {
+    "repository": "nsurator-player-core-tvos",
+    "path": "Config/tvos-ffmpeg-sources.json",
+    "note": "Same four archives and SHA-256 values as the tvOS lock, which mirrors nsurator-macos-native Config/nsurator-player-core-ffmpeg-sources.json (artifactVersion 2026.09.24.1)."
+  }
+}

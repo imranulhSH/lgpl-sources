@@ -1,5 +1,17 @@
 # Apple Vision Pro app: FFmpeg libraries built 2026-10-20 (static)
 
+> **Replaced on 2026-11-11 by [`visionos-ffmpeg-static-2026.11.11-e9f11afc`](https://github.com/imranulhSH/lgpl-sources/releases/tag/visionos-ffmpeg-static-2026.11.11-e9f11afc),
+> before any build of the app was distributed. No app build uses this release.**
+> The sources, patches and configure options are the same. These libraries had
+> the build's directory paths compiled into them; that release's libraries have
+> none. Apart from this note, this folder and the release's assets are as
+> published on 2026-11-10.
+>
+> **2026-11-11 已由 [`visionos-ffmpeg-static-2026.11.11-e9f11afc`](https://github.com/imranulhSH/lgpl-sources/releases/tag/visionos-ffmpeg-static-2026.11.11-e9f11afc) 取代。** 当时应用还没有任何构建对外发布，
+> 没有任何应用版本使用本 Release。源码、补丁和配置参数相同；这一版的库里编进了构建
+> 机器上的目录路径，新版没有。除这段说明外，本目录和 Release 的附件保持 2026-11-10
+> 发布时的样子。
+
 Release tag: `visionos-ffmpeg-static-2026.10.20-5d1d94b7`
 
 This folder and its release are the corresponding source for the FFmpeg,

@@ -1,0 +1,13 @@
+slice=xros-arm64
+target=arm64-apple-xros27.0
+sdk=XROS27.0.sdk (27.0)
+clang=Apple clang version 21.0.0 (clang-2100.3.34.2)
+built=2026-11-11T12:42:48Z
+profile=base static LGPL; libdav1d; libbluray+libudfread; VideoToolbox; network disabled
+source.ffmpeg=8.1.2 sha256=464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c
+source.dav1d=1.5.3 sha256=cbe212b02faf8c6eed5b6d55ef8a6e363aaab83f15112e960701a9c3df813686
+source.libbluray=1.4.1 sha256=e22381a313a231d94ddf9180564b36d803f33bdfc7c0b53c03868bc43e5d163d
+source.libudfread=1.2.0 sha256=adcce1190925f9d35a477757c5e3f0e221315d14d3d45b4ae62540ea0925f877
+patchset.sha256=d05b1628891e1cf524c03cac2205231b99ba350ae9d646fc1ce7b8cee1202819
+ffmpeg.configure=src/configure --enable-cross-compile --target-os=darwin --arch=arm64 --cc=clang --enable-static --disable-shared --enable-pic --disable-programs --disable-doc --disable-debug --disable-avdevice --disable-devices --enable-avcodec --enable-avformat --enable-avutil --enable-swresample --enable-swscale --enable-libbluray --enable-videotoolbox --pkg-config=pkg-config --extra-cflags=-target\ arm64-apple-xros27.0\ -fPIC --extra-ldflags=-target\ arm64-apple-xros27.0 --enable-libdav1d --disable-network 
+ffmpeg.environment=SDKROOT=XROS27.0.sdk; clang and pkg-config on PATH; make install prefix=<stage>

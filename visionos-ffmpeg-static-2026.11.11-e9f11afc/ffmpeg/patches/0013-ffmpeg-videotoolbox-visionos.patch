@@ -1,0 +1,37 @@
+--- a/libavcodec/videotoolbox.c
++++ b/libavcodec/videotoolbox.c
+@@ -817,7 +817,11 @@
+     CFDictionarySetValue(buffer_attributes, kCVPixelBufferIOSurfacePropertiesKey, io_surface_properties);
+     CFDictionarySetValue(buffer_attributes, kCVPixelBufferWidthKey, w);
+     CFDictionarySetValue(buffer_attributes, kCVPixelBufferHeightKey, h);
+-#if TARGET_OS_IPHONE
++#if TARGET_OS_VISION
++    /* NPC_FFMPEG_VISIONOS_VIDEOTOOLBOX: visionOS has no OpenGL ES; ask for
++     * Metal-compatible buffers instead. */
++    CFDictionarySetValue(buffer_attributes, kCVPixelBufferMetalCompatibilityKey, kCFBooleanTrue);
++#elif TARGET_OS_IPHONE
+     CFDictionarySetValue(buffer_attributes, kCVPixelBufferOpenGLESCompatibilityKey, kCFBooleanTrue);
+ #else
+     CFDictionarySetValue(buffer_attributes, kCVPixelBufferIOSurfaceOpenGLTextureCompatibilityKey, kCFBooleanTrue);
+--- a/libavutil/hwcontext_videotoolbox.c
++++ b/libavutil/hwcontext_videotoolbox.c
+@@ -549,7 +549,8 @@
+     // Check that our SDK is at least macOS 12 / iOS 15 / tvOS 15
+     #if (TARGET_OS_OSX  && defined(__MAC_12_0)    && __MAC_OS_X_VERSION_MAX_ALLOWED  >= __MAC_12_0)     || \
+         (TARGET_OS_IOS  && defined(__IPHONE_15_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_15_0)  || \
+-        (TARGET_OS_TV   && defined(__TVOS_15_0)   && __TV_OS_VERSION_MAX_ALLOWED     >= __TVOS_15_0)
++        (TARGET_OS_TV   && defined(__TVOS_15_0)   && __TV_OS_VERSION_MAX_ALLOWED     >= __TVOS_15_0)  || \
++        TARGET_OS_VISION /* NPC_FFMPEG_VISIONOS_VIDEOTOOLBOX: every visionOS SDK has CVBufferCopyAttachments */
+         // On recent enough versions, just use the respective API
+         if (__builtin_available(macOS 12.0, iOS 15.0, tvOS 15.0, *))
+             return CVBufferCopyAttachments(buffer, attachment_mode);
+@@ -626,7 +627,8 @@
+         CVBufferRemoveAttachment(pixbuf, kCVImageBufferGammaLevelKey);
+ 
+ #if (TARGET_OS_OSX && __MAC_OS_X_VERSION_MAX_ALLOWED >= 100800) || \
+-    (TARGET_OS_IOS && __IPHONE_OS_VERSION_MAX_ALLOWED >= 100000)
++    (TARGET_OS_IOS && __IPHONE_OS_VERSION_MAX_ALLOWED >= 100000) || \
++    TARGET_OS_VISION
+     if (__builtin_available(macOS 10.8, iOS 10, *)) {
+         CFDictionaryRef attachments =
+             vt_cv_buffer_copy_attachments(pixbuf, kCVAttachmentMode_ShouldPropagate);

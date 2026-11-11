@@ -1,0 +1,211 @@
+--- a/libavformat/webvttdec.c
++++ b/libavformat/webvttdec.c
+@@ -36,6 +36,9 @@
+     const AVClass *class;
+     FFDemuxSubtitlesQueue q;
+     int kind;
++    int hls_timestamp_map;
++    int64_t timestamp_offset;
++    int64_t timestamp_reference;
+ } WebVTTContext;
+ 
+ static int webvtt_probe(const AVProbeData *p)
+@@ -58,21 +61,107 @@
+     return AV_NOPTS_VALUE;
+ }
+ 
++/* HLS timestamp mapping is opt-in; standalone WebVTT retains local time.
++ * Parse bounded decimal components rather than accepting sscanf overflows. */
++static int hls_decimal(const char **p, int64_t maximum, int64_t *out, int *digits)
++{
++    int64_t n = 0;
++    int count = 0;
++    while (**p >= '0' && **p <= '9') {
++        int digit = *(*p)++ - '0';
++        if (n > (maximum - digit) / 10)
++            return AVERROR_INVALIDDATA;
++        n = n * 10 + digit;
++        count++;
++    }
++    if (!count || n > maximum)
++        return AVERROR_INVALIDDATA;
++    *out = n;
++    if (digits) *digits = count;
++    return 0;
++}
++
++static int hls_local_timestamp(const char **p, int64_t *out)
++{
++    int64_t a, b, c = 0, ms;
++    int digits;
++    const int64_t max_hours = INT64_MAX / (3600LL * 90000) - 1;
++    if (hls_decimal(p, max_hours, &a, NULL) < 0 || *(*p)++ != ':' ||
++        hls_decimal(p, 59, &b, &digits) < 0 || digits != 2)
++        return AVERROR_INVALIDDATA;
++    if (**p == ':') {
++        ++*p;
++        if (hls_decimal(p, 59, &c, &digits) < 0 || digits != 2)
++            return AVERROR_INVALIDDATA;
++    } else {
++        if (a > 59) return AVERROR_INVALIDDATA;
++        c = b; b = a; a = 0;
++    }
++    if (*(*p)++ != '.' || hls_decimal(p, 999, &ms, &digits) < 0 || digits != 3)
++        return AVERROR_INVALIDDATA;
++    *out = ((a * 3600 + b * 60 + c) * 1000 + ms) * 90;
++    return 0;
++}
++
++static int hls_parse_timestamp_map(WebVTTContext *ctx, const char *header)
++{
++    const char *p = header;
++    int found = 0;
++    while (*p) {
++        size_t len = strcspn(p, "\r\n");
++        if (!strncmp(p, "X-TIMESTAMP-MAP=", 16)) {
++            const char *value = p + 16;
++            int have_local = 0, have_mpegts = 0;
++            int64_t local = 0, mpegts = 0;
++            if (found++) return AVERROR_INVALIDDATA;
++            for (int field = 0; field < 2; field++) {
++                while (*value == ' ' || *value == '\t') value++;
++                if (!strncmp(value, "LOCAL:", 6) && !have_local) {
++                    value += 6;
++                    if (hls_local_timestamp(&value, &local) < 0) return AVERROR_INVALIDDATA;
++                    have_local = 1;
++                } else if (!strncmp(value, "MPEGTS:", 7) && !have_mpegts) {
++                    value += 7;
++                    if (hls_decimal(&value, (1LL << 33) - 1, &mpegts, NULL) < 0) return AVERROR_INVALIDDATA;
++                    have_mpegts = 1;
++                } else return AVERROR_INVALIDDATA;
++                while (*value == ' ' || *value == '\t') value++;
++                if (field == 0 && *value++ != ',') return AVERROR_INVALIDDATA;
++            }
++            if (!have_local || !have_mpegts || value != p + len)
++                return AVERROR_INVALIDDATA;
++            if (ctx->timestamp_reference != AV_NOPTS_VALUE) {
++                int64_t delta = av_compare_mod(mpegts, ctx->timestamp_reference, 1LL << 33);
++                if ((delta > 0 && ctx->timestamp_reference > INT64_MAX - delta) ||
++                    (delta < 0 && ctx->timestamp_reference < INT64_MIN - delta))
++                    return AVERROR_INVALIDDATA;
++                mpegts = ctx->timestamp_reference + delta;
++            }
++            if (mpegts < INT64_MIN + local) return AVERROR_INVALIDDATA;
++            ctx->timestamp_offset = mpegts - local;
++        }
++        p += len;
++        while (*p == '\r' || *p == '\n') p++;
++    }
++    return 0;
++}
++
+ static int webvtt_read_header(AVFormatContext *s)
+ {
+     WebVTTContext *webvtt = s->priv_data;
+     AVBPrint cue;
+     int res = 0;
++    unsigned hls_bytes = 0, hls_cues = 0;
+     AVStream *st = avformat_new_stream(s, NULL);
+ 
+     if (!st)
+         return AVERROR(ENOMEM);
+-    avpriv_set_pts_info(st, 64, 1, 1000);
++    avpriv_set_pts_info(st, 64, 1, webvtt->hls_timestamp_map ? 90000 : 1000);
+     st->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+     st->codecpar->codec_id   = AV_CODEC_ID_WEBVTT;
+     st->disposition |= webvtt->kind;
+ 
+-    av_bprint_init(&cue,    0, AV_BPRINT_SIZE_UNLIMITED);
++    av_bprint_init(&cue, 0, webvtt->hls_timestamp_map ? 65536 : AV_BPRINT_SIZE_UNLIMITED);
+ 
+     for (;;) {
+         int i;
+@@ -88,14 +177,21 @@
+ 
+         if (!cue.len)
+             break;
++        if (webvtt->hls_timestamp_map) {
++            if (cue.len > 1048576 - hls_bytes || ++hls_cues > 8192) { res = AVERROR(ENOSPC); goto end; }
++            hls_bytes += cue.len;
++        }
+ 
+         p = identifier = cue.str;
+         pos = avio_tell(s->pb);
+ 
+-        /* ignore header chunk */
+-        if (!strncmp(p, "\xEF\xBB\xBFWEBVTT", 9) ||
+-            !strncmp(p, "WEBVTT", 6) ||
+-            !strncmp(p, "STYLE", 5) ||
++        /* Read the HLS synchronization anchor only in the header chunk. */
++        if (!strncmp(p, "\xEF\xBB\xBFWEBVTT", 9) || !strncmp(p, "WEBVTT", 6)) {
++            if (webvtt->hls_timestamp_map && (res = hls_parse_timestamp_map(webvtt, p)) < 0)
++                goto end;
++            continue;
++        }
++        if (!strncmp(p, "STYLE", 5) ||
+             !strncmp(p, "REGION", 6) ||
+             !strncmp(p, "NOTE", 4))
+             continue;
+@@ -120,13 +216,21 @@
+         }
+ 
+         /* cue timestamps */
+-        if ((ts_start = read_ts(p)) == AV_NOPTS_VALUE)
++        if (webvtt->hls_timestamp_map) {
++            const char *start = p;
++            if (hls_local_timestamp(&start, &ts_start) < 0) { res = AVERROR_INVALIDDATA; goto end; }
++            ts_start /= 90;
++        } else if ((ts_start = read_ts(p)) == AV_NOPTS_VALUE)
+             break;
+         if (!(p = strstr(p, "-->")))
+             break;
+         p += 2;
+         do p++; while (*p == ' ' || *p == '\t');
+-        if ((ts_end = read_ts(p)) == AV_NOPTS_VALUE)
++        if (webvtt->hls_timestamp_map) {
++            const char *end = p;
++            if (hls_local_timestamp(&end, &ts_end) < 0) { res = AVERROR_INVALIDDATA; goto end; }
++            ts_end /= 90;
++        } else if ((ts_end = read_ts(p)) == AV_NOPTS_VALUE)
+             break;
+ 
+         /* optional cue settings */
+@@ -148,8 +252,27 @@
+             goto end;
+         }
+         sub->pos = pos;
+-        sub->pts = ts_start;
+-        sub->duration = ts_end - ts_start;
++        if (webvtt->hls_timestamp_map) {
++            if (ts_start < 0 || ts_end < ts_start || ts_end > INT64_MAX / 90 ||
++                (webvtt->timestamp_offset > 0 && ts_end * 90 > INT64_MAX - webvtt->timestamp_offset)) {
++                res = AVERROR_INVALIDDATA;
++                goto end;
++            }
++            sub->pts = ts_start * 90 + webvtt->timestamp_offset;
++            sub->duration = (ts_end - ts_start) * 90;
++            /* AVSubtitle uses an unsigned 32-bit millisecond end time.
++             * Refuse values that would wrap there or in the host microsecond
++             * timeline; do not turn malformed timing into a shorter cue. */
++            if (ts_end <= ts_start || ts_end - ts_start >= UINT32_MAX ||
++                av_rescale_q(sub->pts, (AVRational){1, 90000}, AV_TIME_BASE_Q) == AV_NOPTS_VALUE ||
++                av_rescale_q(sub->duration, (AVRational){1, 90000}, AV_TIME_BASE_Q) <= 0) {
++                res = AVERROR_INVALIDDATA;
++                goto end;
++            }
++        } else {
++            sub->pts = ts_start;
++            sub->duration = ts_end - ts_start;
++        }
+ 
+ #define SET_SIDE_DATA(name, type) do {                                  \
+     if (name##_len) {                                                   \
+@@ -198,6 +321,8 @@
+ #define KIND_FLAGS AV_OPT_FLAG_SUBTITLE_PARAM|AV_OPT_FLAG_DECODING_PARAM
+ 
+ static const AVOption options[] = {
++    { "hls_timestamp_reference", "Nearest HLS media timestamp in 90kHz units", OFFSET(timestamp_reference), AV_OPT_TYPE_INT64, { .i64 = AV_NOPTS_VALUE }, INT64_MIN, INT64_MAX, AV_OPT_FLAG_DECODING_PARAM },
++    { "hls_timestamp_map", "Apply HLS X-TIMESTAMP-MAP anchors", OFFSET(hls_timestamp_map), AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, AV_OPT_FLAG_DECODING_PARAM },
+     { "kind", "Set kind of WebVTT track", OFFSET(kind), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, INT_MAX, KIND_FLAGS, .unit = "webvtt_kind" },
+         { "subtitles",    "WebVTT subtitles kind",    0, AV_OPT_TYPE_CONST, { .i64 = 0 },                           INT_MIN, INT_MAX, KIND_FLAGS, .unit = "webvtt_kind" },
+         { "captions",     "WebVTT captions kind",     0, AV_OPT_TYPE_CONST, { .i64 = AV_DISPOSITION_CAPTIONS },     INT_MIN, INT_MAX, KIND_FLAGS, .unit = "webvtt_kind" },

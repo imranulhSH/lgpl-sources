@@ -1,5 +1,18 @@
 # Apple Vision Pro app: FFmpeg libraries built 2026-11-11 (static)
 
+> **Replaced on 2026-11-12 by [`visionos-ffmpeg-static-2026.11.12-10903474`](https://github.com/imranulhSH/lgpl-sources/releases/tag/visionos-ffmpeg-static-2026.11.12-10903474),
+> before any build of the app was distributed. No app build uses this release.**
+> That release has the same upstream archives, configure options and 17 patches,
+> and two more FFmpeg patches from the app's player core (a Matroska seek goes
+> straight to the block its cue names; an option leaves a font attachment's data
+> unread). Apart from this note, this folder and the release's assets are as
+> published on 2026-11-11.
+>
+> **2026-11-12 已由 [`visionos-ffmpeg-static-2026.11.12-10903474`](https://github.com/imranulhSH/lgpl-sources/releases/tag/visionos-ffmpeg-static-2026.11.12-10903474) 取代。** 当时应用还没有任何构建对外发布，
+> 没有任何应用版本使用本 Release。新版的上游源码包、配置参数和原有的 17 个补丁都相同，
+> 另外加了播放内核的两个 FFmpeg 补丁（Matroska 跳转直接读索引指向的那一块；打开文件时
+> 可以不读字体附件的数据）。除这段说明外，本目录和 Release 的附件保持 2026-11-11 发布时的样子。
+
 Release tag: `visionos-ffmpeg-static-2026.11.11-e9f11afc`
 
 This folder and its release are the corresponding source for the FFmpeg,

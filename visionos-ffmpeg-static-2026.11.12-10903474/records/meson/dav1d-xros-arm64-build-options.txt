@@ -1,0 +1,2 @@
+Meson 1.12.1
+Build Options: -Dbuildtype=release -Dprefix=$WORK/stage/xros-arm64 -Dlibdir=lib -Ddefault_library=static -Dwrap_mode=nodownload -Denable_tools=false -Denable_tests=false -Denable_examples=false -Denable_docs=false --cross-file=$WORK/build/xros-arm64/dav1d.cross

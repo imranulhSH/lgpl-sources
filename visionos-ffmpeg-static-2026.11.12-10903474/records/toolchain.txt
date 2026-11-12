@@ -1,0 +1,8 @@
+FFmpeg's six libraries and libbluray.a: Xcode 27.1 (27A9275), visionOS (XROS) 27.0 SDK (24M361),
+  Apple clang version 21.0.0 (clang-2100.3.34.2), target arm64-apple-xros27.0,
+  built 2026-11-12T05:02:38Z (xros-arm64)
+  (in libbluray.a the files our patches change; the rest of it, and libdav1d.a, were
+  compiled 2026-10-20 with Xcode 27.0 (27A266a) and the same clang, and meson found them
+  up to date; the recompiled members are byte for byte the 2026-10-20 ones)
+meson 1.12.1, ninja 1.13.2 (1.13.2.git.kitware.jobserver-pipe-1), pkg-config: pkgconf 3.0.7
+  (as the build log records them)

@@ -25,7 +25,8 @@ changes to it, or what is needed to rebuild it.
 | [`macos-ffmpeg-artifact-2026.10.09.1`](macos-ffmpeg-artifact-2026.10.09.1/) | Nsurator for Mac builds that pin artifact 2026.10.09.1 (player core `ebfc8a0`, then `0d5c2fe`): the first Mac App Store version after 5.9.17 (build 8) and later | The same libraries as 2026.09.24.1, byte for byte | Dynamic framework `NsuratorPlayerCoreFFmpegRuntime.framework`, loaded by the app executable and its decoder helper |
 | [`macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1`](macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1/) | Nsurator for Mac builds made on or after 2026-08-11 (6.9.9 through 6.9.17, and 5.9.17) | **FFmpeg 8.1.2**, **FriBidi 1.0.16**, libass 0.17.5, FreeType 2.14.3, HarfBuzz 14.3.0, libunibreak 7.0, libpng 1.6.58 (all unmodified) | Separate `ffmpeg` and `ffprobe` programs |
 | [`visionos-ffmpeg-static-2026.10.20-5d1d94b7`](visionos-ffmpeg-static-2026.10.20-5d1d94b7/) | None: replaced by `visionos-ffmpeg-static-2026.11.11-e9f11afc` before any build was distributed (the same sources and patches; these libraries had build paths compiled in) | **FFmpeg 8.1.2** (13 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable |
-| [`visionos-ffmpeg-static-2026.11.11-e9f11afc`](visionos-ffmpeg-static-2026.11.11-e9f11afc/) | Nsuve for Apple Vision Pro, from its first distributed build (none yet) | **FFmpeg 8.1.2** (13 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable |
+| [`visionos-ffmpeg-static-2026.11.11-e9f11afc`](visionos-ffmpeg-static-2026.11.11-e9f11afc/) | None: replaced by `visionos-ffmpeg-static-2026.11.12-10903474` before any build was distributed (the same sources and 17 patches; the new one adds two Matroska patches) | **FFmpeg 8.1.2** (13 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable |
+| [`visionos-ffmpeg-static-2026.11.12-10903474`](visionos-ffmpeg-static-2026.11.12-10903474/) | Nsuve for Apple Vision Pro, from its first distributed build (none yet) | **FFmpeg 8.1.2** (15 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable |
 
 Each folder's README gives the exact source pins, the configure flags, how to
 rebuild, how to replace the library in the app, and anything we could not pin.
@@ -178,7 +179,8 @@ Nsurator 应用本身不开源，其源代码不在这里。本仓库只包含�
 | `macos-ffmpeg-artifact-2026.10.09.1` | 固定到 artifact 2026.10.09.1（播放核心 `ebfc8a0`，之后为 `0d5c2fe`）的 Mac 构建：5.9.17（build 8）之后提交的第一个 Mac App Store 版本及以后 | 与 2026.09.24.1 完全相同的库 | 动态框架 `NsuratorPlayerCoreFFmpegRuntime.framework`，由应用主程序和解码辅助进程加载 |
 | `macos-media-tools-ffmpeg-8.1.2-lgpl-arm64-2026.08.10.1` | 2026-08-11 及之后构建的 Mac 版（6.9.9 至 6.9.17，以及 5.9.17） | **FFmpeg 8.1.2**、**FriBidi 1.0.16**、libass、FreeType、HarfBuzz、libunibreak、libpng（均未修改） | 独立的 `ffmpeg`、`ffprobe` 程序 |
 | `visionos-ffmpeg-static-2026.10.20-5d1d94b7` | 无：在任何构建对外发布之前已由 `visionos-ffmpeg-static-2026.11.11-e9f11afc` 取代（源码和补丁相同；这一版的库里编进了构建路径） | **FFmpeg 8.1.2**（13 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序 |
-| `visionos-ffmpeg-static-2026.11.11-e9f11afc` | Nsuve Apple Vision Pro 版，从第一个对外发布的构建起（尚未发布） | **FFmpeg 8.1.2**（13 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序 |
+| `visionos-ffmpeg-static-2026.11.11-e9f11afc` | 无：在任何构建对外发布之前已由 `visionos-ffmpeg-static-2026.11.12-10903474` 取代（源码和 17 个补丁相同；新版多两个 Matroska 补丁） | **FFmpeg 8.1.2**（13 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序 |
+| `visionos-ffmpeg-static-2026.11.12-10903474` | Nsuve Apple Vision Pro 版，从第一个对外发布的构建起（尚未发布） | **FFmpeg 8.1.2**（15 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序 |
 
 每个目录的 README 写明了确切的源码版本与哈希、配置参数、重新构建和替换的方法，
 以及无法锁定的部分。

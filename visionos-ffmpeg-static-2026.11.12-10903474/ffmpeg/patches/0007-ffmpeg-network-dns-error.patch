@@ -1,0 +1,33 @@
+diff --git a/libavformat/tcp.c b/libavformat/tcp.c
+--- a/libavformat/tcp.c
++++ b/libavformat/tcp.c
+@@ -186,7 +186,8 @@ static int tcp_open(URLContext *h, const char *uri, int flags)
+         ret = getaddrinfo(hostname, portstr, &hints, &ai);
+     if (ret) {
+         av_log(h, AV_LOG_ERROR,
+                "Failed to resolve hostname %s: %s\n",
+                hostname, gai_strerror(ret));
+-        return AVERROR(EIO);
++        /* Preserve the resolver phase without conflating unrelated EIO failures. */
++        return FFERRTAG(0xF8, 'D', 'N', 'S');
+     }
+diff --git a/libavformat/udp.c b/libavformat/udp.c
+--- a/libavformat/udp.c
++++ b/libavformat/udp.c
+@@ -354,5 +354,6 @@ static int udp_set_url(URLContext *h,
+     res0 = ff_ip_resolve_host(h, hostname, port, SOCK_DGRAM, AF_UNSPEC, 0);
+-    if (!res0) return AVERROR(EIO);
++    if (!res0)
++        return FFERRTAG(0xF8, 'D', 'N', 'S');
+     memcpy(addr, res0->ai_addr, res0->ai_addrlen);
+     addr_len = res0->ai_addrlen;
+     freeaddrinfo(res0);
+@@ -444,7 +445,7 @@ int ff_udp_set_remote_url(URLContext *h, const char *uri)
+     /* set the destination address */
+     s->dest_addr_len = udp_set_url(h, &s->dest_addr, hostname, port);
+     if (s->dest_addr_len < 0) {
+-        return AVERROR(EIO);
++        return s->dest_addr_len;
+     }
+     s->is_multicast = ff_is_multicast_address((struct sockaddr*) &s->dest_addr);
+     p = strchr(uri, '?');

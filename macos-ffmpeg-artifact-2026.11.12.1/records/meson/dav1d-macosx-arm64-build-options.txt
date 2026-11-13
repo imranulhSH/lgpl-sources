@@ -1,0 +1,1 @@
+Build Options: -Dbuildtype=release -Dprefix=/tmp/nsurator-npc-artifact-build-202611121/dependencies/macosx-arm64 -Dlibdir=lib -Ddefault_library=static -Denable_tools=false -Denable_tests=false -Denable_examples=false -Denable_docs=false -Dwrap_mode=nodownload --cross-file=/tmp/nsurator-npc-artifact-build-202611121/dav1d-build/macosx-arm64/dav1d-macosx-arm64.cross

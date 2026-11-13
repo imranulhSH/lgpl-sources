@@ -1,0 +1,9 @@
+coreRevision=e4e032fe04f9d64eacf4ba90ffa128e8d028fa31
+coreDirty=0
+Xcode 27.1 Build version 27A9275
+MacOSX SDK 27.0
+Apple clang version 21.0.0 (clang-2100.3.34.2)
+ld-27037.1
+meson=1.11.2
+ninja=1.13.2
+pkg-config=2.5.1

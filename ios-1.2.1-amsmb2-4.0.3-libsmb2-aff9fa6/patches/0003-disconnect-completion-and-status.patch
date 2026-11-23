@@ -1,0 +1,37 @@
+--- a/Dependencies/libsmb2/lib/socket.c
++++ b/Dependencies/libsmb2/lib/socket.c
+@@ -797,6 +797,11 @@
+                 }
+ 
+                 count = smb2_read_data(smb2, smb2_readv_from_socket, 0);
++                /* A completed LOGOFF callback may close this context. Do not
++                 * issue another read on its intentionally invalid socket. */
++                if (count == 0 && !SMB2_VALID_SOCKET(smb2->fd)) {
++                        return 0;
++                }
+                 if (count == -EAGAIN) {
+                         return 0;
+                 }
+--- a/Dependencies/libsmb2/lib/libsmb2.c
++++ b/Dependencies/libsmb2/lib/libsmb2.c
+@@ -2676,7 +2676,10 @@
+ {
+         struct disconnect_data *dc_data = private_data;
+ 
+-        dc_data->cb(smb2, 0, NULL, dc_data->cb_data);
++        if (status != SMB2_STATUS_SUCCESS) {
++                smb2_set_nterror(smb2, status, "%s", nterror_to_str(status));
++        }
++        dc_data->cb(smb2, -nterror_to_errno(status), NULL, dc_data->cb_data);
+         free(dc_data);
+         smb2_close_context(smb2);
+ }
+@@ -2690,7 +2693,7 @@
+ 
+         if (status != SMB2_STATUS_SUCCESS) {
+                 smb2_set_nterror(smb2, status, "%s", nterror_to_str(status));
+-                dc_data->cb(smb2, -ENOMEM, NULL, dc_data->cb_data);
++                dc_data->cb(smb2, -nterror_to_errno(status), NULL, dc_data->cb_data);
+                 free(dc_data);
+                 return;
+         }

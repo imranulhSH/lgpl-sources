@@ -1,0 +1,44 @@
+--- a/AMSMB2/Context.swift
++++ b/AMSMB2/Context.swift
+@@ -19,9 +19,22 @@ final class SMB2Client: CustomDebugStringConvertible, CustomReflectable, @unchec
+     /// context: a disconnect (`smb2_free_all_fhs`), or the context destroyed after a failed service or as this client
+     /// goes. A file handle opened in an earlier epoch is gone and is never touched again (`SMB2FileHandle`).
+     private(set) var fileHandleEpoch: UInt64 = 0
++    /// Nsurator (11-26): libsmb2 keeps every context in one list of its own (`active_contexts`), added to as a context
++    /// is made and removed from as one is destroyed, with no lock — its remove even moves the list's head while it
++    /// walks. Contexts made and destroyed on several threads at once (a NAS walked, its videos' frames made, a film
++    /// read, its sources checked) broke the list, and a later destroy crashed in it (the headset, three times in ten
++    /// minutes on 11-26, one of them with three destroys at once). Every make and destroy of a context takes this lock.
++    private static let contextListLock = NSLock()
++
++    /// `body` while no other context is made or destroyed.
++    static func withContextList<R>(_ body: () throws -> R) rethrows -> R {
++        contextListLock.lock()
++        defer { contextListLock.unlock() }
++        return try body()
++    }
+ 
+     init(timeout: TimeInterval) throws {
+-        self.context = try smb2_init_context().unwrap()
++        self.context = try Self.withContextList { smb2_init_context() }.unwrap()
+         self.timeout = timeout
+     }
+ 
+@@ -32,7 +45,7 @@ final class SMB2Client: CustomDebugStringConvertible, CustomReflectable, @unchec
+         try? withThreadSafeContext { context in
+             self.context = nil
+             fileHandleEpoch &+= 1
+-            smb2_destroy_context(context)
++            Self.withContextList { smb2_destroy_context(context) }
+         }
+     }
+ 
+@@ -217,7 +230,7 @@ extension SMB2Client {
+             // Nsurator (11-14): the error is read before the context goes, and its file handles go with it.
+             let message = error
+             fileHandleEpoch &+= 1
+-            smb2_destroy_context(context)
++            Self.withContextList { smb2_destroy_context(context) }
+             context = nil
+             try POSIXError.throwIfError(result, description: message)
+         }

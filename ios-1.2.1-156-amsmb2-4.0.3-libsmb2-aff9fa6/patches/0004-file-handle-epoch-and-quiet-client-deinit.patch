@@ -1,0 +1,241 @@
+--- a/AMSMB2/Context.swift
++++ b/AMSMB2/Context.swift
+@@ -15,6 +15,10 @@ final class SMB2Client: CustomDebugStringConvertible, CustomReflectable, @unchec
+     var context: UnsafeMutablePointer<smb2_context>?
+     private var _context_lock = NSRecursiveLock()
+     var timeout: TimeInterval
++    /// Nsurator (11-14): moves on, under the context's lock, each time libsmb2 frees every file handle of this
++    /// context: a disconnect (`smb2_free_all_fhs`), or the context destroyed after a failed service or as this client
++    /// goes. A file handle opened in an earlier epoch is gone and is never touched again (`SMB2FileHandle`).
++    private(set) var fileHandleEpoch: UInt64 = 0
+ 
+     init(timeout: TimeInterval) throws {
+         self.context = try smb2_init_context().unwrap()
+@@ -22,11 +26,12 @@ final class SMB2Client: CustomDebugStringConvertible, CustomReflectable, @unchec
+     }
+ 
+     deinit {
+-        if isConnected {
+-            try? self.disconnect()
+-        }
++        // Nsurator (11-14): no tree disconnect from here. A client goes on whichever thread lets it go last; saying
++        // goodbye then serviced its socket once more (a disconnect after the one its manager said), and a crash on the
++        // owner's iPhone ended in this destroy. Destroying the context closes its socket and frees what it holds.
+         try? withThreadSafeContext { context in
+             self.context = nil
++            fileHandleEpoch &+= 1
+             smb2_destroy_context(context)
+         }
+     }
+@@ -209,9 +214,12 @@ extension SMB2Client {
+     func service(revents: Int32) throws {
+         let result = smb2_service(context, revents)
+         if result < 0 {
++            // Nsurator (11-14): the error is read before the context goes, and its file handles go with it.
++            let message = error
++            fileHandleEpoch &+= 1
+             smb2_destroy_context(context)
+             context = nil
+-            try POSIXError.throwIfError(result, description: error)
++            try POSIXError.throwIfError(result, description: message)
+         }
+     }
+ }
+@@ -231,6 +239,7 @@ extension SMB2Client {
+         try async_await { context, cbPtr -> Int32 in
+             smb2_free_all_dirs(context)
+             smb2_free_all_fhs(context)
++            fileHandleEpoch &+= 1
+             return smb2_disconnect_share_async(context, SMB2Client.generic_handler, cbPtr)
+         }
+     }
+--- a/AMSMB2/FileHandle.swift
++++ b/AMSMB2/FileHandle.swift
+@@ -20,6 +20,17 @@ let O_SYMLINK: Int32 = O_NOFOLLOW
+ final class SMB2FileHandle: @unchecked Sendable {
+     private var client: SMB2Client
+     private var handle: smb2fh?
++    /// Nsurator (11-14): the client's `fileHandleEpoch` this handle was opened in.
++    private var epoch: UInt64 = 0
++
++    /// Nsurator (11-14): `handle` while libsmb2 still holds it; call under the client's lock (inside its
++    /// `async_await` handlers or `withThreadSafeContext`). A disconnect frees every file handle of its context, and so
++    /// does a destroyed context: one opened before it (an earlier epoch) is gone, and closing or reading it would use
++    /// freed memory, so it is said to be closed instead.
++    private func liveHandle() throws -> smb2fh {
++        guard let handle, epoch == client.fileHandleEpoch else { throw POSIXError(.EBADF) }
++        return handle
++    }
+ 
+     convenience init(forReadingAtPath path: String, on client: SMB2Client) throws {
+         try self.init(path, flags: O_RDONLY, on: client)
+@@ -94,13 +105,21 @@ final class SMB2FileHandle: @unchecked Sendable {
+     init(fileDescriptor: smb2_file_id, on client: SMB2Client) throws {
+         self.client = client
+         var fileDescriptor = fileDescriptor
+-        self.handle = smb2_fh_from_file_id(client.context, &fileDescriptor)
++        // Nsurator (11-14): made under the client's lock, in the epoch it is made in.
++        let made = try client.withThreadSafeContext { context in
++            (smb2_fh_from_file_id(context, &fileDescriptor), client.fileHandleEpoch)
++        }
++        self.handle = made.0
++        self.epoch = made.1
+     }
+ 
+     // This initializer does not support O_SYMLINK.
+     private init(_ path: String, flags: Int32, lock: OpLock = .none, on client: SMB2Client) throws {
++        var openedEpoch: UInt64 = 0
+         let (_, handle) = try client.async_await(dataHandler: OpaquePointer.init) {
+             context, cbPtr -> Int32 in
++            // Nsurator (11-14): the open and its answer both happen under the lock this epoch is read in.
++            openedEpoch = client.fileHandleEpoch
+             var leaseKey = lock.leaseContext.map { Data(value: $0.key) } ?? Data()
+             return leaseKey.withUnsafeMutableBytes {
+                 smb2_open_async_with_oplock_or_lease(
+@@ -113,34 +132,35 @@ final class SMB2FileHandle: @unchecked Sendable {
+         }
+         self.client = client
+         self.handle = handle
++        self.epoch = openedEpoch
+     }
+ 
+     deinit {
+-        do {
+-            let handle = try self.handle.unwrap()
+-            try client.async_await { context, cbPtr -> Int32 in
+-                smb2_close_async(context, handle, SMB2Client.generic_handler, cbPtr)
+-            }
+-        } catch {}
++        // Nsurator (11-14): only a handle libsmb2 still holds is closed (`liveHandle()`).
++        guard handle != nil else { return }
++        _ = try? client.async_await { context, cbPtr -> Int32 in
++            smb2_close_async(context, try self.liveHandle(), SMB2Client.generic_handler, cbPtr)
++        }
+     }
+ 
+     var fileId: UUID {
+-        .init(uuid: (try? smb2_get_file_id(handle.unwrap()).unwrap().pointee) ?? compound_file_id)
++        .init(uuid: (try? client.withThreadSafeContext { _ in
++            try smb2_get_file_id(self.liveHandle()).unwrap().pointee
++        }) ?? compound_file_id)
+     }
+ 
+     func close() {
+-        guard let handle = handle else { return }
+-        self.handle = nil
++        guard handle != nil else { return }
+         _ = try? client.withThreadSafeContext { context in
+-            smb2_close(context, handle)
++            smb2_close(context, try self.liveHandle())
+         }
++        handle = nil
+     }
+ 
+     func fstat() throws -> smb2_stat_64 {
+-        let handle = try handle.unwrap()
+         var st = smb2_stat_64()
+         try client.async_await { context, cbPtr -> Int32 in
+-            smb2_fstat_async(context, handle, &st, SMB2Client.generic_handler, cbPtr)
++            smb2_fstat_async(context, try self.liveHandle(), &st, SMB2Client.generic_handler, cbPtr)
+         }
+         return st
+     }
+@@ -184,9 +204,8 @@ final class SMB2FileHandle: @unchecked Sendable {
+     }
+ 
+     func ftruncate(toLength: UInt64) throws {
+-        let handle = try handle.unwrap()
+         try client.async_await { context, cbPtr -> Int32 in
+-            smb2_ftruncate_async(context, handle, toLength, SMB2Client.generic_handler, cbPtr)
++            smb2_ftruncate_async(context, try self.liveHandle(), toLength, SMB2Client.generic_handler, cbPtr)
+         }
+     }
+ 
+@@ -201,8 +220,9 @@ final class SMB2FileHandle: @unchecked Sendable {
+ 
+     @discardableResult
+     func lseek(offset: Int64, whence: SeekWhence) throws -> Int64 {
+-        let handle = try handle.unwrap()
+-        let result = smb2_lseek(client.context, handle, offset, whence.rawValue, nil)
++        let result = try client.withThreadSafeContext { context in
++            smb2_lseek(context, try self.liveHandle(), offset, whence.rawValue, nil)
++        }
+         try POSIXError.throwIfError(result, description: client.error)
+         return result
+     }
+@@ -212,13 +232,12 @@ final class SMB2FileHandle: @unchecked Sendable {
+             length <= UInt32.max, "Length bigger than UInt32.max can't be handled by libsmb2."
+         )
+ 
+-        let handle = try handle.unwrap()
+         let count = length > 0 ? length : optimizedReadSize
+         var buffer = Data(repeating: 0, count: count)
+         let result = try buffer.withUnsafeMutableBytes { buffer in
+             try client.async_await { context, cbPtr -> Int32 in
+                 smb2_read_async(
+-                    context, handle, buffer.baseAddress, .init(buffer.count), SMB2Client.generic_handler, cbPtr
++                    context, try self.liveHandle(), buffer.baseAddress, .init(buffer.count), SMB2Client.generic_handler, cbPtr
+                 )
+             }
+         }
+@@ -230,13 +249,12 @@ final class SMB2FileHandle: @unchecked Sendable {
+             length <= UInt32.max, "Length bigger than UInt32.max can't be handled by libsmb2."
+         )
+ 
+-        let handle = try handle.unwrap()
+         let count = length > 0 ? length : optimizedReadSize
+         var buffer = Data(repeating: 0, count: count)
+         let result = try buffer.withUnsafeMutableBytes { buffer in
+             try client.async_await { context, cbPtr -> Int32 in
+                 smb2_pread_async(
+-                    context, handle, buffer.baseAddress, .init(buffer.count), offset, SMB2Client.generic_handler,
++                    context, try self.liveHandle(), buffer.baseAddress, .init(buffer.count), offset, SMB2Client.generic_handler,
+                     cbPtr
+                 )
+             }
+@@ -257,11 +275,10 @@ final class SMB2FileHandle: @unchecked Sendable {
+             data.count <= Int32.max, "Data bigger than Int32.max can't be handled by libsmb2."
+         )
+ 
+-        let handle = try handle.unwrap()
+         let result = try Data(data).withUnsafeBytes { buffer in
+             try client.async_await { context, cbPtr -> Int32 in
+                 smb2_write_async(
+-                    context, handle, buffer.baseAddress, .init(buffer.count), SMB2Client.generic_handler, cbPtr
++                    context, try self.liveHandle(), buffer.baseAddress, .init(buffer.count), SMB2Client.generic_handler, cbPtr
+                 )
+             }
+         }
+@@ -274,11 +291,10 @@ final class SMB2FileHandle: @unchecked Sendable {
+             data.count <= Int32.max, "Data bigger than Int32.max can't be handled by libsmb2."
+         )
+ 
+-        let handle = try handle.unwrap()
+         let result = try Data(data).withUnsafeBytes { buffer in
+             try client.async_await { context, cbPtr -> Int32 in
+                 smb2_pwrite_async(
+-                    context, handle, buffer.baseAddress, .init(buffer.count), offset, SMB2Client.generic_handler,
++                    context, try self.liveHandle(), buffer.baseAddress, .init(buffer.count), offset, SMB2Client.generic_handler,
+                     cbPtr
+                 )
+             }
+@@ -288,9 +304,8 @@ final class SMB2FileHandle: @unchecked Sendable {
+     }
+ 
+     func fsync() throws {
+-        let handle = try handle.unwrap()
+         try client.async_await { context, cbPtr -> Int32 in
+-            smb2_fsync_async(context, handle, SMB2Client.generic_handler, cbPtr)
++            smb2_fsync_async(context, try self.liveHandle(), SMB2Client.generic_handler, cbPtr)
+         }
+     }
+     
+@@ -318,7 +333,7 @@ final class SMB2FileHandle: @unchecked Sendable {
+     func changeNotify(for type: SMB2FileChangeType) throws -> [SMB2FileChangeInfo] {
+         let (_, result) = try client.async_await(dataHandler: [SMB2FileChangeInfo].init) { context, dataPtr in
+             smb2_notify_change_filehandle_async(
+-                context, handle,
++                context, try self.liveHandle(),
+                 UInt16(type.contains([.recursive]) ? SMB2_CHANGE_NOTIFY_WATCH_TREE : 0),
+                 type.completionFilter,
+                 0,

@@ -1,5 +1,19 @@
 # iPhone and iPad app 1.2.1: AMSMB2 and libsmb2
 
+> **From build 156 on, replaced by [`ios-1.2.1-156-amsmb2-4.0.3-libsmb2-aff9fa6`](https://github.com/imranulhSH/lgpl-sources/releases/tag/ios-1.2.1-156-amsmb2-4.0.3-libsmb2-aff9fa6).**
+> This release covers Nsuve for iPhone and iPad 1.2.1, builds 136 to 155. The
+> new one has the same upstream archives and patches 0001 to 0004, and adds
+> AMSMB2 patch 0005 (2026-11-26): every SMB connection is made and destroyed
+> under one lock, so connections opened and closed on several threads at once
+> no longer break libsmb2's list of them. Apart from this note, this folder and
+> the release's assets are as published on 2026-11-23.
+>
+> **从 156 号构建起由 [`ios-1.2.1-156-amsmb2-4.0.3-libsmb2-aff9fa6`](https://github.com/imranulhSH/lgpl-sources/releases/tag/ios-1.2.1-156-amsmb2-4.0.3-libsmb2-aff9fa6) 接替。**
+> 本 Release 对应 Nsuve iPhone/iPad 1.2.1 的 136 至 155 号构建。新版的上游源码包和补丁
+> 0001–0004 都相同，另加 AMSMB2 补丁 0005（2026-11-26）：建、拆每条 SMB 连接都排同一把锁，
+> 多个线程同时开关连接不会再弄乱 libsmb2 的连接表。除这段说明外，本目录和 Release 的附件
+> 保持 2026-11-23 发布时的样子。
+
 Release tag: `ios-1.2.1-amsmb2-4.0.3-libsmb2-aff9fa6`
 
 This folder and its release are the corresponding source for

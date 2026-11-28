@@ -30,6 +30,7 @@ changes to it, or what is needed to rebuild it.
 | [`visionos-ffmpeg-static-2026.10.20-5d1d94b7`](visionos-ffmpeg-static-2026.10.20-5d1d94b7/) | None: replaced by `visionos-ffmpeg-static-2026.11.11-e9f11afc` before any build was distributed (the same sources and patches; these libraries had build paths compiled in) | **FFmpeg 8.1.2** (13 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable |
 | [`visionos-ffmpeg-static-2026.11.11-e9f11afc`](visionos-ffmpeg-static-2026.11.11-e9f11afc/) | None: replaced by `visionos-ffmpeg-static-2026.11.12-10903474` before any build was distributed (the same sources and 17 patches; the new one adds two Matroska patches) | **FFmpeg 8.1.2** (13 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable |
 | [`visionos-ffmpeg-static-2026.11.12-10903474`](visionos-ffmpeg-static-2026.11.12-10903474/) | Nsuve for Apple Vision Pro, from its first distributed build (none yet) | **FFmpeg 8.1.2** (15 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable |
+| [`tvos-ffmpeg-static-2026.11.12-cea30042`](tvos-ffmpeg-static-2026.11.12-cea30042/) | Nsuve for Apple TV, from its first distributed build (none yet) | **FFmpeg 8.1.2** (15 patches), **libbluray 1.4.1** (4 patches), **libudfread 1.2.0**, dav1d 1.5.3 | Static, inside the app executable |
 
 Each folder's README gives the exact source pins, the configure flags, how to
 rebuild, how to replace the library in the app, and anything we could not pin.
@@ -92,6 +93,10 @@ In short:
   `build/script/build_media_tools_artifact.sh --source-cache <archives> --work-root <new directory>`
 - Apple Vision Pro FFmpeg libraries:
   `NV_FFMPEG_ARCHIVES=<archives> NV_FFMPEG_SLICES=xros-arm64 build/nsurator-visionos-native/scripts/build_ffmpeg_visionos.sh`
+- Apple TV FFmpeg libraries:
+  `python3 reconstruct.py <archives> <new directory>`, then
+  `bash scripts/build-tvos-ffmpeg-runtime.sh` in that directory (the folder's
+  README gives the settings).
 
 The build scripts in these releases default to a `full` profile that adds
 libraries FFmpeg treats as GPL (from player core `ebfc8a0` on, `base` is the
@@ -132,6 +137,12 @@ Do not use `full` if you want to rebuild what the apps ship.
   from the sources of release `ios-1.2.1-156-amsmb2-4.0.3-libsmb2-aff9fa6`, with the same name and install name, put it in
   the app's `Frameworks` folder, and sign the app again with your own
   certificate.
+- **Apple TV, FFmpeg libraries.** These are linked statically into the app
+  executable. Relinking them needs the app's object files, which are not in
+  this repository. The Nsurator support page
+  (https://www.nsurator.com/support.html#oss) explains how to ask for the
+  materials needed to relink. As on the iPhone and iPad, a relinked app runs
+  only in a copy you sign and install yourself.
 
 On the Mac, a re-signed copy no longer carries the Mac App Store signature, so
 features that depend on it (in-app purchases, and data containers and app
@@ -190,6 +201,7 @@ Nsurator 应用本身不开源，其源代码不在这里。本仓库只包含�
 | `visionos-ffmpeg-static-2026.10.20-5d1d94b7` | 无：在任何构建对外发布之前已由 `visionos-ffmpeg-static-2026.11.11-e9f11afc` 取代（源码和补丁相同；这一版的库里编进了构建路径） | **FFmpeg 8.1.2**（13 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序 |
 | `visionos-ffmpeg-static-2026.11.11-e9f11afc` | 无：在任何构建对外发布之前已由 `visionos-ffmpeg-static-2026.11.12-10903474` 取代（源码和 17 个补丁相同；新版多两个 Matroska 补丁） | **FFmpeg 8.1.2**（13 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序 |
 | `visionos-ffmpeg-static-2026.11.12-10903474` | Nsuve Apple Vision Pro 版，从第一个对外发布的构建起（尚未发布） | **FFmpeg 8.1.2**（15 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序 |
+| `tvos-ffmpeg-static-2026.11.12-cea30042` | Nsuve Apple TV 版，从第一个对外发布的构建起（尚未发布） | **FFmpeg 8.1.2**（15 个补丁）、**libbluray 1.4.1**（4 个补丁）、**libudfread 1.2.0**、dav1d 1.5.3 | 静态链接进应用主程序 |
 
 每个目录的 README 写明了确切的源码版本与哈希、配置参数、重新构建和替换的方法，
 以及无法锁定的部分。
@@ -240,6 +252,10 @@ Mac 构建只有 2026-09-24 及之后的构建对外发布过。
 - **Apple Vision Pro 中的 SMB**：AMSMB2 和 libsmb2 是动态框架 `AMSMB2.framework`，与
   iPhone、iPad 相同：用 Release `ios-1.2.1-156-amsmb2-4.0.3-libsmb2-aff9fa6` 的源码为 arm64 visionOS 构建同名、同 install name 的
   框架，放进应用的 `Frameworks` 目录，再用你自己的证书重新签名应用。
+- **Apple TV 中的 FFmpeg 等库**：静态链接进应用主程序，重新链接需要应用的目标文件，
+  本仓库不包含这些文件，获取方式见
+  https://www.nsurator.com/support.html#oss 。和 iPhone、iPad 一样，重新链接的应用
+  只能用在你自己签名安装的副本里。
 
 在 Mac 上，重新签名的副本不再带有 Mac App Store 签名，内购、与开发者团队绑定的
 数据容器和 App Group 可能无法使用。

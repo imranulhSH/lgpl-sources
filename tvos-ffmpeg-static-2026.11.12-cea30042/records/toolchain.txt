@@ -1,0 +1,19 @@
+Xcode 27.1 (27A9275), tvOS (AppleTVOS) 27.0 SDK,
+  Apple clang version 21.0.0 (clang-2100.3.34.2),
+  targets arm64-apple-tvos17.0 (appletvos-arm64) and
+  arm64-apple-tvos17.0-simulator (appletvsimulator-arm64),
+  compiler flags -fembed-bitcode -fPIC;
+  build recorded 2026-11-12T06:28:34Z at player core commit
+  2e5da9da31164e0155f9b142ab996aeb4ef35cbe
+meson 1.12.1, ninja 1.13.2.git.kitware.jobserver-pipe-1
+  (as the build's meson logs record them)
+pkg-config for FFmpeg's configure: /opt/homebrew/bin/pkg-config
+  (as the configure line records it; its version is not in these records)
+
+The source packet's own toolchain record, written when the packet was made:
+  Xcode 27.1
+  Build version 27A9275
+  Apple clang version 21.0.0 (clang-2100.3.34.2)
+  Target: arm64-apple-darwin27.0.0
+  Thread model: posix
+  InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin

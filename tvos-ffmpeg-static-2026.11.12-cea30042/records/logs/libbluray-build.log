@@ -1,0 +1,271 @@
+Cleaning... 0 files.
+The Meson build system
+Version: 1.12.1
+Source dir: $WORK/sources/libbluray-1.4.1
+Build dir: $WORK/libbluray-build/appletvos-arm64
+Build type: cross build
+Project name: libbluray
+Project version: 1.4.1
+C compiler for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS27.0.sdk -fembed-bitcode -fPIC (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+C linker for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS27.0.sdk -fembed-bitcode -fPIC ld64 27037.1
+C compiler for the build machine: cc (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+C linker for the build machine: cc ld64 27037.1
+Build machine cpu family: aarch64
+Build machine cpu: aarch64
+Host machine cpu family: aarch64
+Host machine cpu: arm64
+Target machine cpu family: aarch64
+Target machine cpu: arm64
+.build/tvos-runtime/sources/libbluray-1.4.1/meson.build:103: WARNING: No jni_md.h found in jni/ios, using a fallback.
+Has header "dirent.h" : YES (cached)
+Has header "dlfcn.h" : YES (cached)
+Has header "mntent.h" : NO (cached)
+Has header "strings.h" : YES (cached)
+Has header "sys/time.h" : YES (cached)
+Has header "sys/dl.h" : NO (cached)
+Checking for function "getfsstat" : NO (cached)
+Checking for function "dladdr" : NO (cached)
+Checking for function "getopt" : YES (cached)
+Checking for function "dlopen" : YES (cached)
+Dependency threads for host machine found: YES unknown (cached)
+Dependency freetype2 for host machine skipped: feature freetype disabled
+Dependency libxml-2.0 for host machine skipped: feature libxml2 disabled
+Looking for a fallback subproject for the dependency libudfread because:
+Use of fallback dependencies is forced.
+
+Executing subproject libudfread for machine: host 
+
+libudfread| Project name: libudfread
+libudfread| Project version: 1.2.0
+libudfread| C compiler for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS27.0.sdk -fembed-bitcode -fPIC (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+libudfread| C linker for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS27.0.sdk -fembed-bitcode -fPIC ld64 27037.1
+libudfread| C compiler for the build machine: cc (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+libudfread| C linker for the build machine: cc ld64 27037.1
+libudfread| Has header "unistd.h" : YES (cached)
+libudfread| Has header "fcntl.h" : YES (cached)
+libudfread| Checking for function "pread" : YES (cached)
+libudfread| Dependency threads for host machine found: YES unknown (cached)
+libudfread| Compiler for C supports arguments -Wdisabled-optimization: YES (cached)
+libudfread| Compiler for C supports arguments -Wpointer-arith: YES (cached)
+libudfread| Compiler for C supports arguments -Wredundant-decls: YES (cached)
+libudfread| Compiler for C supports arguments -Wcast-qual: YES (cached)
+libudfread| Compiler for C supports arguments -Wwrite-strings: YES (cached)
+libudfread| Compiler for C supports arguments -Wundef: YES (cached)
+libudfread| Compiler for C supports arguments -Wshadow: YES (cached)
+libudfread| Compiler for C supports arguments -Wmissing-prototypes: YES (cached)
+libudfread| Compiler for C supports arguments -Werror=implicit-function-declaration: YES (cached)
+libudfread| Compiler for C supports arguments -Werror-implicit-function-declaration: YES (cached)
+libudfread| Compiler for C supports arguments -Winline: YES (cached)
+libudfread| Compiler for C supports arguments -fomit-frame-pointer: YES (cached)
+libudfread| Configuring config.h using configuration
+libudfread| Configuring udfread-version.h using configuration
+libudfread| Build targets in project: 3
+libudfread| Subproject libudfread finished.
+
+Dependency libudfread for host machine found: YES 1.2.0 (overridden)
+Compiler for C supports arguments -Werror=implicit-function-declaration: YES (cached)
+Compiler for C supports arguments -Werror-implicit-function-declaration: YES (cached)
+Compiler for C supports arguments -Wdisabled-optimization: YES (cached)
+Compiler for C supports arguments -Wpointer-arith: YES (cached)
+Compiler for C supports arguments -Wredundant-decls: YES (cached)
+Compiler for C supports arguments -Wcast-qual: YES (cached)
+Compiler for C supports arguments -Wwrite-strings: YES (cached)
+Compiler for C supports arguments -Wtype-limits: YES (cached)
+Compiler for C supports arguments -Wundef: YES (cached)
+Compiler for C supports arguments -Wmissing-prototypes: YES (cached)
+Compiler for C supports arguments -Wshadow: YES (cached)
+Compiler for C supports arguments -fomit-frame-pointer: YES (cached)
+Configuring config.h using configuration
+Configuring bluray-version.h using configuration
+Found pkg-config: NO
+Program ant skipped: feature bdj_jar disabled
+Message: Compiling the JAR requires both Java and Ant, disabling.
+Build targets in project: 12
+
+libbluray 1.4.1
+
+    Build BD-J JAR               : false
+    Font support (freetype2)     : false
+    Use system fonts (fontconfig): false
+    Metadata support (libxml2)   : false
+    External libudfread          : false
+
+  Subprojects (for host machine)
+    libudfread                   : YES
+
+  User defined options
+    Cross files                  : /tmp/nsurator-tvos-core-cbc3434a0d54/libbluray-build/appletvos-arm64/libbluray-appletvos-arm64.cross
+    bdj_jar                      : disabled
+    buildtype                    : release
+    default_library              : static
+    embed_udfread                : true
+    enable_devtools              : false
+    enable_docs                  : false
+    enable_examples              : false
+    enable_tools                 : false
+    fontconfig                   : disabled
+    force_fallback_for           : libudfread
+    freetype                     : disabled
+    libdir                       : lib
+    libxml2                      : disabled
+    prefix                       : /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64
+    wrap_mode                    : nodownload
+
+Found ninja-1.13.2.git.kitware.jobserver-pipe-1 at $TOOLING/venv/bin/ninja
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+ninja: Entering directory `$WORK/libbluray-build/appletvos-arm64'
+ninja: no work to do.
+INFO: autodetecting backend as ninja
+INFO: calculating backend command to run: $TOOLING/venv/bin/ninja -C $WORK/libbluray-build/appletvos-arm64
+ninja: Entering directory `$WORK/libbluray-build/appletvos-arm64'
+ninja: no work to do.
+Installing src/libbluray.a to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/lib
+Installing $WORK/sources/libbluray-1.4.1/src/file/filesystem.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/util/log_control.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/bluray.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/bdnav/clpi_data.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/keys.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/bdnav/meta_data.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/decoders/overlay.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/player_settings.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/libbluray
+Installing $WORK/libbluray-build/appletvos-arm64/src/libbluray/bluray-version.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/libbluray
+Installing $WORK/libbluray-build/appletvos-arm64/meson-private/libbluray.pc to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/lib/pkgconfig
+Cleaning... 0 files.
+The Meson build system
+Version: 1.12.1
+Source dir: $WORK/sources/libbluray-1.4.1
+Build dir: $WORK/libbluray-build/appletvsimulator-arm64
+Build type: cross build
+Project name: libbluray
+Project version: 1.4.1
+C compiler for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0-simulator -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator27.0.sdk -fembed-bitcode -fPIC (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+C linker for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0-simulator -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator27.0.sdk -fembed-bitcode -fPIC ld64 27037.1
+C compiler for the build machine: cc (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+C linker for the build machine: cc ld64 27037.1
+Build machine cpu family: aarch64
+Build machine cpu: aarch64
+Host machine cpu family: aarch64
+Host machine cpu: arm64
+Target machine cpu family: aarch64
+Target machine cpu: arm64
+.build/tvos-runtime/sources/libbluray-1.4.1/meson.build:103: WARNING: No jni_md.h found in jni/ios, using a fallback.
+Has header "dirent.h" : YES (cached)
+Has header "dlfcn.h" : YES (cached)
+Has header "mntent.h" : NO (cached)
+Has header "strings.h" : YES (cached)
+Has header "sys/time.h" : YES (cached)
+Has header "sys/dl.h" : NO (cached)
+Checking for function "getfsstat" : NO (cached)
+Checking for function "dladdr" : NO (cached)
+Checking for function "getopt" : YES (cached)
+Checking for function "dlopen" : YES (cached)
+Dependency threads for host machine found: YES unknown (cached)
+Dependency freetype2 for host machine skipped: feature freetype disabled
+Dependency libxml-2.0 for host machine skipped: feature libxml2 disabled
+Looking for a fallback subproject for the dependency libudfread because:
+Use of fallback dependencies is forced.
+
+Executing subproject libudfread for machine: host 
+
+libudfread| Project name: libudfread
+libudfread| Project version: 1.2.0
+libudfread| C compiler for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0-simulator -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator27.0.sdk -fembed-bitcode -fPIC (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+libudfread| C linker for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0-simulator -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator27.0.sdk -fembed-bitcode -fPIC ld64 27037.1
+libudfread| C compiler for the build machine: cc (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+libudfread| C linker for the build machine: cc ld64 27037.1
+libudfread| Has header "unistd.h" : YES (cached)
+libudfread| Has header "fcntl.h" : YES (cached)
+libudfread| Checking for function "pread" : YES (cached)
+libudfread| Dependency threads for host machine found: YES unknown (cached)
+libudfread| Compiler for C supports arguments -Wdisabled-optimization: YES (cached)
+libudfread| Compiler for C supports arguments -Wpointer-arith: YES (cached)
+libudfread| Compiler for C supports arguments -Wredundant-decls: YES (cached)
+libudfread| Compiler for C supports arguments -Wcast-qual: YES (cached)
+libudfread| Compiler for C supports arguments -Wwrite-strings: YES (cached)
+libudfread| Compiler for C supports arguments -Wundef: YES (cached)
+libudfread| Compiler for C supports arguments -Wshadow: YES (cached)
+libudfread| Compiler for C supports arguments -Wmissing-prototypes: YES (cached)
+libudfread| Compiler for C supports arguments -Werror=implicit-function-declaration: YES (cached)
+libudfread| Compiler for C supports arguments -Werror-implicit-function-declaration: YES (cached)
+libudfread| Compiler for C supports arguments -Winline: YES (cached)
+libudfread| Compiler for C supports arguments -fomit-frame-pointer: YES (cached)
+libudfread| Configuring config.h using configuration
+libudfread| Configuring udfread-version.h using configuration
+libudfread| Build targets in project: 3
+libudfread| Subproject libudfread finished.
+
+Dependency libudfread for host machine found: YES 1.2.0 (overridden)
+Compiler for C supports arguments -Werror=implicit-function-declaration: YES (cached)
+Compiler for C supports arguments -Werror-implicit-function-declaration: YES (cached)
+Compiler for C supports arguments -Wdisabled-optimization: YES (cached)
+Compiler for C supports arguments -Wpointer-arith: YES (cached)
+Compiler for C supports arguments -Wredundant-decls: YES (cached)
+Compiler for C supports arguments -Wcast-qual: YES (cached)
+Compiler for C supports arguments -Wwrite-strings: YES (cached)
+Compiler for C supports arguments -Wtype-limits: YES (cached)
+Compiler for C supports arguments -Wundef: YES (cached)
+Compiler for C supports arguments -Wmissing-prototypes: YES (cached)
+Compiler for C supports arguments -Wshadow: YES (cached)
+Compiler for C supports arguments -fomit-frame-pointer: YES (cached)
+Configuring config.h using configuration
+Configuring bluray-version.h using configuration
+Found pkg-config: NO
+Program ant skipped: feature bdj_jar disabled
+Message: Compiling the JAR requires both Java and Ant, disabling.
+Build targets in project: 12
+
+libbluray 1.4.1
+
+    Build BD-J JAR               : false
+    Font support (freetype2)     : false
+    Use system fonts (fontconfig): false
+    Metadata support (libxml2)   : false
+    External libudfread          : false
+
+  Subprojects (for host machine)
+    libudfread                   : YES
+
+  User defined options
+    Cross files                  : /tmp/nsurator-tvos-core-cbc3434a0d54/libbluray-build/appletvsimulator-arm64/libbluray-appletvsimulator-arm64.cross
+    bdj_jar                      : disabled
+    buildtype                    : release
+    default_library              : static
+    embed_udfread                : true
+    enable_devtools              : false
+    enable_docs                  : false
+    enable_examples              : false
+    enable_tools                 : false
+    fontconfig                   : disabled
+    force_fallback_for           : libudfread
+    freetype                     : disabled
+    libdir                       : lib
+    libxml2                      : disabled
+    prefix                       : /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64
+    wrap_mode                    : nodownload
+
+Found ninja-1.13.2.git.kitware.jobserver-pipe-1 at $TOOLING/venv/bin/ninja
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+ninja: Entering directory `$WORK/libbluray-build/appletvsimulator-arm64'
+ninja: no work to do.
+INFO: autodetecting backend as ninja
+INFO: calculating backend command to run: $TOOLING/venv/bin/ninja -C $WORK/libbluray-build/appletvsimulator-arm64
+ninja: Entering directory `$WORK/libbluray-build/appletvsimulator-arm64'
+ninja: no work to do.
+Installing src/libbluray.a to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/lib
+Installing $WORK/sources/libbluray-1.4.1/src/file/filesystem.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/util/log_control.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/bluray.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/bdnav/clpi_data.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/keys.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/bdnav/meta_data.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/decoders/overlay.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/libbluray
+Installing $WORK/sources/libbluray-1.4.1/src/libbluray/player_settings.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/libbluray
+Installing $WORK/libbluray-build/appletvsimulator-arm64/src/libbluray/bluray-version.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/libbluray
+Installing $WORK/libbluray-build/appletvsimulator-arm64/meson-private/libbluray.pc to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/lib/pkgconfig
+Built libbluray Apple slices under: /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies

@@ -1,0 +1,2 @@
+Meson 1.12.1
+Build Options: -Dbuildtype=release -Dprefix=/tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64 -Dlibdir=lib -Ddefault_library=static -Denable_tools=false -Denable_tests=false -Denable_examples=false -Denable_docs=false -Dwrap_mode=nodownload --cross-file=/tmp/nsurator-tvos-core-cbc3434a0d54/dav1d-build/appletvsimulator-arm64/dav1d-appletvsimulator-arm64.cross

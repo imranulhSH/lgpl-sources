@@ -1,0 +1,98 @@
+--- a/libavformat/hls.c
++++ b/libavformat/hls.c
+@@ -247,6 +247,7 @@
+     int64_t first_timestamp;
+     uint64_t media_refresh_generation;
+     int64_t cur_timestamp;
++    int64_t subtitle_primed_through;
+     AVIOInterruptCB *interrupt_callback;
+     AVDictionary *avio_opts;
+     AVDictionary *seg_format_opts;
+@@ -2111,8 +2112,7 @@
+ 
+ int avpriv_nsurator_hls_timeline_version(void) { return 1; }
+ 
+-int avpriv_nsurator_hls_prime_initial_subtitle(AVFormatContext *s, int stream_index,
+-                                              int64_t target)
++static int prime_subtitle(AVFormatContext *s, int stream_index, int64_t target, int reset)
+ {
+     if (!s || !s->iformat || strcmp(s->iformat->name, "hls") || stream_index < 0 ||
+         stream_index >= s->nb_streams || target == AV_NOPTS_VALUE)
+@@ -2126,9 +2126,28 @@
+                 pls = c->playlists[n]; local_index = j;
+             }
+     if (!pls || !pls->n_segments) return AVERROR_INVALIDDATA;
+-    if (pls->needed) return 0; /* selected before probing; already queued */
++    if (pls->needed && !reset) return 0; /* selected before probing; already queued */
++    if (reset) {
++        av_packet_unref(pls->pkt);
++        ff_format_io_close(pls->parent, &pls->input);
++        avformat_close_input(&pls->ctx);
++        pls->subtitle_waiting_for_epoch = 0;
++    }
+     PacketList *queue = &ffformatcontext(s)->packet_buffer;
+-    int64_t upper = target;
++    if (reset) {
++        PacketListEntry **position = &queue->head, *previous = NULL;
++        int scanned = 0;
++        while (*position) {
++            PacketListEntry *node = *position;
++            if (++scanned > 65536) return AVERROR(ENOSPC);
++            if (node->pkt.stream_index == stream_index) {
++                *position = node->next;
++                if (queue->tail == node) queue->tail = previous;
++                av_packet_unref(&node->pkt); av_free(node);
++            } else { previous = node; position = &node->next; }
++        }
++    }
++    int64_t upper = reset ? FFMAX(target, c->cur_timestamp) : target;
+     for (PacketListEntry *node = queue->head; node; node = node->next) {
+         AVPacket *p = &node->pkt;
+         if (p->stream_index < 0 || p->stream_index >= s->nb_streams) return AVERROR_INVALIDDATA;
+@@ -2184,6 +2203,7 @@
+     }
+     c->cur_seq_no = saved_sequence;
+     pls->priming_retained_subtitle_window = 0;
++    c->subtitle_primed_through = ret < 0 ? AV_NOPTS_VALUE : upper;
+     if (ret < 0) {
+         avpriv_packet_list_free(&additions);
+         av_packet_unref(pls->pkt);
+@@ -2210,6 +2230,38 @@
+     }
+     return 0;
+ }
++
++int64_t avpriv_nsurator_hls_subtitle_coverage(AVFormatContext *s);
++int64_t avpriv_nsurator_hls_subtitle_coverage(AVFormatContext *s)
++{ return ((HLSContext *)s->priv_data)->subtitle_primed_through; }
++int avpriv_nsurator_hls_take_primed_subtitle(AVFormatContext *s, int stream_index, AVPacket *packet);
++int avpriv_nsurator_hls_take_primed_subtitle(AVFormatContext *s, int stream_index, AVPacket *packet)
++{
++    PacketList *queue = &ffformatcontext(s)->packet_buffer;
++    PacketListEntry **position = &queue->head, *previous = NULL;
++    int scanned = 0;
++    while (*position) {
++        PacketListEntry *node = *position;
++        if (++scanned > 65536) return AVERROR(ENOSPC);
++        if (node->pkt.stream_index == stream_index) {
++            *position = node->next;
++            if (queue->tail == node) queue->tail = previous;
++            av_packet_move_ref(packet, &node->pkt);
++            av_free(node);
++            return 1;
++        }
++        previous = node; position = &node->next;
++    }
++    return 0;
++}
++
++int avpriv_nsurator_hls_subtitle_selection_version(void);
++int avpriv_nsurator_hls_select_subtitle_at(AVFormatContext *s, int stream_index, int64_t target);
++int avpriv_nsurator_hls_subtitle_selection_version(void) { return 1; }
++int avpriv_nsurator_hls_prime_initial_subtitle(AVFormatContext *s, int stream_index, int64_t target)
++{ return prime_subtitle(s, stream_index, target, 0); }
++int avpriv_nsurator_hls_select_subtitle_at(AVFormatContext *s, int stream_index, int64_t target)
++{ return prime_subtitle(s, stream_index, target, 1); }
+ 
+ static void add_renditions_to_variant(HLSContext *c, struct variant *var,
+                                       enum AVMediaType type, const char *group_id)

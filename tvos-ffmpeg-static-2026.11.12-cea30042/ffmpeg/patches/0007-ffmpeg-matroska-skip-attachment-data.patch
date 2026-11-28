@@ -1,0 +1,78 @@
+diff --git a/libavformat/matroskadec.c b/libavformat/matroskadec.c
+--- a/libavformat/matroskadec.c
++++ b/libavformat/matroskadec.c
+@@ -463,6 +463,9 @@
+      * on the way (cue_relative_seek_subtitle_margin; < 0 keeps every one). */
+     int cue_relative_seek;
+     double cue_relative_seek_subtitle_margin;
++    /* Nsurator: the data of an attachment that is not a picture (a font) is not
++     * read at open; its stream names where it lies (skip_attachment_data). */
++    int skip_attachment_data;
+     MatroskaCueBlock *cue_blocks;
+     int nb_cue_blocks;
+ } MatroskaDemuxContext;
+@@ -1524,6 +1527,23 @@
+         res = ebml_read_ascii(pb, length, syntax->def.s, data);
+         break;
+     case EBML_BIN:
++        if (syntax->id == MATROSKA_ID_FILEDATA && matroska->skip_attachment_data) {
++            /* Nsurator: an attachment that is not a picture (a font) is not read; its stream says where its data lies.
++             * One whose type is not known by its data (FileMimeType after FileData) is read as before. */
++            const MatroskaAttachment *attachment =
++                (const MatroskaAttachment *)((const char *)data - offsetof(MatroskaAttachment, bin));
++            if (attachment->mime && !av_strstart(attachment->mime, "image/", NULL)) {
++                EbmlBin *bin = data;
++                int64_t skipped;
++                av_buffer_unref(&bin->buf);
++                bin->data = NULL;
++                bin->size = length;
++                bin->pos  = pos_alt;
++                skipped = avio_skip(pb, length);
++                res = skipped < 0 ? (int)skipped : 0;
++                break;
++            }
++        }
+         res = ebml_read_binary(pb, length, pos_alt, data);
+         break;
+     case EBML_LEVEL1:
+@@ -3464,9 +3484,30 @@
+ 
+     attachments = attachments_list->elem;
+     for (j = 0; j < attachments_list->nb_elem; j++) {
++        int skipped = matroska->skip_attachment_data && !attachments[j].bin.data && attachments[j].bin.size > 0;
+         if (!(attachments[j].filename && attachments[j].mime &&
+-              attachments[j].bin.data && attachments[j].bin.size > 0)) {
++              ((attachments[j].bin.data && attachments[j].bin.size > 0) || skipped))) {
+             av_log(matroska->ctx, AV_LOG_ERROR, "incomplete attachment\n");
++        } else if (skipped) {
++            /* Nsurator: not read (skip_attachment_data); where its data lies, for the reader to fetch it later. */
++            AVStream *st = avformat_new_stream(s, NULL);
++            if (!st)
++                break;
++            av_dict_set(&st->metadata, "filename", attachments[j].filename, 0);
++            av_dict_set(&st->metadata, "mimetype", attachments[j].mime, 0);
++            if (attachments[j].description)
++                av_dict_set(&st->metadata, "title", attachments[j].description, 0);
++            av_dict_set_int(&st->metadata, "file_offset", attachments[j].bin.pos, 0);
++            av_dict_set_int(&st->metadata, "file_size", attachments[j].bin.size, 0);
++            st->codecpar->codec_type = AVMEDIA_TYPE_ATTACHMENT;
++            st->codecpar->codec_id   = AV_CODEC_ID_NONE;
++            for (i = 0; mkv_mime_tags[i].id != AV_CODEC_ID_NONE; i++) {
++                if (av_strstart(attachments[j].mime, mkv_mime_tags[i].str, NULL)) {
++                    st->codecpar->codec_id = mkv_mime_tags[i].id;
++                    break;
++                }
++            }
++            attachments[j].stream = st;
+         } else {
+             AVStream *st = avformat_new_stream(s, NULL);
+             if (!st)
+@@ -5165,6 +5206,8 @@
+       offsetof(MatroskaDemuxContext, cue_relative_seek), AV_OPT_TYPE_BOOL, { .i64 = 1 }, 0, 1, AV_OPT_FLAG_DECODING_PARAM },
+     { "cue_relative_seek_subtitle_margin", "on such a seek, a subtitle block that ended this many seconds before the key frame or more is not read (< 0: every one is)",
+       offsetof(MatroskaDemuxContext, cue_relative_seek_subtitle_margin), AV_OPT_TYPE_DOUBLE, { .dbl = -1 }, -1, 86400, AV_OPT_FLAG_DECODING_PARAM },
++    { "skip_attachment_data", "do not read the data of attachments other than pictures at open; each such stream names where it lies (file_offset, file_size)",
++      offsetof(MatroskaDemuxContext, skip_attachment_data), AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, AV_OPT_FLAG_DECODING_PARAM },
+     { NULL },
+ };
+ 

@@ -1,0 +1,393 @@
+diff --git a/libavformat/matroskadec.c b/libavformat/matroskadec.c
+--- a/libavformat/matroskadec.c
++++ b/libavformat/matroskadec.c
+@@ -52,6 +52,7 @@
+ #include "libavutil/spherical.h"
+ 
+ #include "libavcodec/bytestream.h"
++#include "libavcodec/codec_desc.h"
+ #include "libavcodec/defs.h"
+ #include "libavcodec/flac.h"
+ #include "libavcodec/itut35.h"
+@@ -319,8 +320,26 @@ typedef struct MatroskaChapter {
+ typedef struct MatroskaIndexPos {
+     uint64_t track;
+     uint64_t pos;
++    uint64_t relative_pos;
++    uint64_t duration;
+ } MatroskaIndexPos;
+ 
++/* Where the block a cue names sits in its cluster (CueRelativePosition; 0
++ * when the cue does not say) and how long it lasts (CueDuration; 0 when not
++ * said), by the stream index entry the cue made. */
++typedef struct MatroskaCueBlock {
++    int      stream_index;
++    uint64_t track;
++    int64_t  cluster_pos;
++    int64_t  timestamp;
++    uint64_t relative_pos;
++    uint64_t duration;
++} MatroskaCueBlock;
++
++/* A CueRelativePosition or CueDuration this large is taken as not said, so
++ * that nothing computed from one can overflow. */
++#define MATROSKA_CUE_BLOCK_LIMIT (UINT64_C(1) << 40)
++
+ typedef struct MatroskaIndex {
+     uint64_t time;
+     EbmlList pos;
+@@ -438,6 +457,14 @@ typedef struct MatroskaDemuxContext {
+ 
+     /* Bandwidth value for WebM DASH Manifest */
+     int bandwidth;
++
++    /* A seek goes straight to the block its cue names (cue_relative_seek); a
++     * subtitle block ended this long before the cue's key frame is not read
++     * on the way (cue_relative_seek_subtitle_margin; < 0 keeps every one). */
++    int cue_relative_seek;
++    double cue_relative_seek_subtitle_margin;
++    MatroskaCueBlock *cue_blocks;
++    int nb_cue_blocks;
+ } MatroskaDemuxContext;
+ 
+ #define CHILD_OF(parent) { .def = { .n = parent } }
+@@ -697,8 +724,8 @@ static EbmlSyntax matroska_chapters[] = {
+ static EbmlSyntax matroska_index_pos[] = {
+     { MATROSKA_ID_CUETRACK,           EBML_UINT, 0, 0, offsetof(MatroskaIndexPos, track) },
+     { MATROSKA_ID_CUECLUSTERPOSITION, EBML_UINT, 0, 0, offsetof(MatroskaIndexPos, pos) },
+-    { MATROSKA_ID_CUERELATIVEPOSITION,EBML_NONE },
+-    { MATROSKA_ID_CUEDURATION,        EBML_NONE },
++    { MATROSKA_ID_CUERELATIVEPOSITION,EBML_UINT, 0, 0, offsetof(MatroskaIndexPos, relative_pos) },
++    { MATROSKA_ID_CUEDURATION,        EBML_UINT, 0, 0, offsetof(MatroskaIndexPos, duration) },
+     { MATROSKA_ID_CUEBLOCKNUMBER,     EBML_NONE },
+     CHILD_OF(matroska_index_entry)
+ };
+@@ -1288,8 +1315,13 @@ static int ebml_parse(MatroskaDemuxContext *matroska,
+                     // in live mode, finish parsing if EOF is reached.
+                     return 1;
+                 if (level && pos == avio_tell(pb)) {
+-                    if (level->length == EBML_UNKNOWN_LENGTH) {
+-                        // Unknown-length levels automatically end at EOF.
++                    if (level->length == EBML_UNKNOWN_LENGTH ||
++                        (uint64_t)pos == level->start + level->length) {
++                        // Unknown-length levels automatically end at EOF, and
++                        // so does one whose end is the file's: after a seek
++                        // into the last cluster of a segment (cue_relative_seek),
++                        // that cluster's level has an unknown length, and no
++                        // element of it ends it, or the segment, by length.
+                         matroska->num_levels--;
+                         return LEVEL_ENDED;
+                     } else {
+@@ -2011,17 +2043,38 @@ static void matroska_add_index_entries(MatroskaDemuxContext *matroska)
+         av_log(matroska->ctx, AV_LOG_WARNING, "Dropping apparently-broken index.\n");
+         return;
+     }
++    av_freep(&matroska->cue_blocks);
++    matroska->nb_cue_blocks = 0;
++    {
++        size_t count = 0;
++        for (i = 0; i < index_list->nb_elem; i++)
++            count += index[i].pos.nb_elem;
++        if (count && count < INT_MAX)
++            matroska->cue_blocks = av_malloc_array(count, sizeof(*matroska->cue_blocks));
++    }
+     for (i = 0; i < index_list->nb_elem; i++) {
+         EbmlList *pos_list    = &index[i].pos;
+         MatroskaIndexPos *pos = pos_list->elem;
+         for (j = 0; j < pos_list->nb_elem; j++) {
+             MatroskaTrack *track = matroska_find_track_by_num(matroska,
+                                                               pos[j].track);
+-            if (track && track->stream)
++            if (track && track->stream) {
+                 av_add_index_entry(track->stream,
+                                    pos[j].pos + matroska->segment_start,
+                                    index[i].time / index_scale, 0, 0,
+                                    AVINDEX_KEYFRAME);
++                if (matroska->cue_blocks) {
++                    MatroskaCueBlock *block = &matroska->cue_blocks[matroska->nb_cue_blocks++];
++                    block->stream_index = track->stream->index;
++                    block->track        = pos[j].track;
++                    block->cluster_pos  = pos[j].pos + matroska->segment_start;
++                    block->timestamp    = index[i].time / index_scale;
++                    block->relative_pos = pos[j].relative_pos < MATROSKA_CUE_BLOCK_LIMIT
++                                          ? pos[j].relative_pos : 0;
++                    block->duration     = pos[j].duration < MATROSKA_CUE_BLOCK_LIMIT
++                                          ? pos[j].duration : 0;
++                }
++            }
+         }
+     }
+ }
+@@ -4344,6 +4397,225 @@ static int matroska_read_packet(AVFormatContext *s, AVPacket *pkt)
+     return 0;
+ }
+ 
++/* An EBML number at buf (its length mark taken off) and its size in *size;
++ * -1 when buf does not hold one of at most max_size bytes. Logs nothing: a
++ * cued block's place is looked for at several candidates. */
++static int64_t matroska_peek_num(const uint8_t *buf, int left, int max_size, int *size)
++{
++    int length, i;
++    uint64_t value;
++
++    if (left < 1 || !buf[0])
++        return -1;
++    length = 8 - ff_log2_tab[buf[0]];
++    if (length > max_size || length > left)
++        return -1;
++    value = buf[0] & (0xFF >> length);
++    for (i = 1; i < length; i++)
++        value = (value << 8) | buf[i];
++    *size = length;
++    return value;
++}
++
++/* Whether buf starts the block a cue names (a SimpleBlock, or a BlockGroup
++ * whose Block comes first): the cue's track, a key frame where keyframe is
++ * asked (a SimpleBlock says it), and a time that leaves its cluster's
++ * Timestamp, the cue's time less the block's, at 0 or more. */
++static int matroska_cued_block_at(const uint8_t *buf, int left, const MatroskaCueBlock *cue,
++                                  int keyframe, uint64_t *cluster_time)
++{
++    int size, at = 0;
++    int64_t length, number;
++    int16_t block_time;
++
++    if (left < 1)
++        return 0;
++    if (buf[0] == MATROSKA_ID_BLOCKGROUP) {
++        at = 1;
++        if (matroska_peek_num(buf + at, left - at, 8, &size) < 0)
++            return 0;
++        at += size;
++        if (at >= left || buf[at] != MATROSKA_ID_BLOCK)
++            return 0;
++        keyframe = 0;
++    } else if (buf[0] != MATROSKA_ID_SIMPLEBLOCK) {
++        return 0;
++    }
++    at += 1;
++    length = matroska_peek_num(buf + at, left - at, 8, &size);
++    if (length < 4 || length == (int64_t)((1ULL << (7 * size)) - 1))
++        return 0;
++    at += size;
++    number = matroska_peek_num(buf + at, left - at, 8, &size);
++    if (number < 0 || (uint64_t)number != cue->track)
++        return 0;
++    at += size;
++    if (at + 3 > left)
++        return 0;
++    block_time = AV_RB16(buf + at);
++    if (keyframe && !(buf[at + 2] & 0x80))
++        return 0;
++    if (cue->timestamp < block_time)
++        return 0;
++    *cluster_time = cue->timestamp - block_time;
++    return 1;
++}
++
++/* Whether a cued block ended margin or more before timestamp (margin >= 0; one
++ * whose cue gives no duration has not), with no sum that can overflow. */
++static int matroska_cue_block_ended(const MatroskaCueBlock *block, int64_t timestamp,
++                                    int64_t margin)
++{
++    uint64_t since;
++
++    if (margin < 0 || !block->duration || block->timestamp > timestamp)
++        return 0;
++    since = (uint64_t)timestamp - (uint64_t)block->timestamp;
++    return since >= block->duration && since - block->duration >= (uint64_t)margin;
++}
++
++/*
++ * After a seek to a cue's cluster: when the cue says where its block sits in
++ * the cluster (CueRelativePosition), the demuxer goes on from that block, not
++ * through every block before it — megabytes, where a cluster holds several
++ * key frames — and reads nothing of the cluster before it. The block's place
++ * is the cluster's data start (past its 4-byte ID and a size of 1 to 8 bytes)
++ * plus the cue's position: one read from the first of those 8 places holds
++ * them all, and the one where the cue's track's block sits at the cue's time
++ * is taken; the cluster's Timestamp is the cue's time less that block's, and
++ * the rest of the cluster is parsed as a cluster of unknown length. That
++ * Timestamp is not read, so every cue of the cluster must agree with it: none
++ * may come before it, and the cues of the block's track must lie in the same
++ * order by place as by time (a cue whose position names another block of its
++ * track, written wrong or left from before an edit, disagrees with that
++ * block's own cue). A subtitle track being read keeps its blocks: the jump
++ * stops at the first of them its cues name in this cluster before the key
++ * frame — but for a text line whose CueDuration says it ended
++ * cue_relative_seek_subtitle_margin seconds or more before the key frame, when
++ * that is set (>= 0: the caller's subtitle delay, so it can never be shown); a
++ * bitmap set stays, as a later one may build on it — and a subtitle track
++ * without cues keeps the whole cluster. A cue without a position, no such block
++ * in one place alone, or a cue that disagrees, leaves the demuxer at the
++ * cluster's start, as before.
++ */
++static void matroska_seek_cued_block(MatroskaDemuxContext *matroska, AVStream *st,
++                                     int64_t cluster_pos, int64_t timestamp)
++{
++    AVFormatContext *s = matroska->ctx;
++    AVIOContext *pb = s->pb;
++    MatroskaCluster *cluster = &matroska->current_cluster;
++    const MatroskaCueBlock *cue = NULL, *target;
++    MatroskaTrack *track;
++    uint8_t head[40];
++    uint64_t cluster_time = 0, candidate_time;
++    int64_t first, block_pos, margin;
++    int i, j, got, found = 0, size_length = 0;
++
++    if (!matroska->cue_relative_seek || !matroska->nb_cue_blocks ||
++        !(pb->seekable & AVIO_SEEKABLE_NORMAL) ||
++        cluster_pos < 0 || cluster_pos > INT64_MAX / 2)
++        return;
++    for (i = 0; i < matroska->nb_cue_blocks; i++) {
++        const MatroskaCueBlock *block = &matroska->cue_blocks[i];
++        if (block->stream_index == st->index && block->cluster_pos == cluster_pos &&
++            block->timestamp == timestamp) {
++            cue = block;
++            break;
++        }
++    }
++    if (!cue || !cue->relative_pos)
++        return;
++    track = matroska_find_track_by_num(matroska, cue->track);
++    if (!track || track->time_scale != 1.0)
++        return;
++    target = cue;
++    margin = matroska->cue_relative_seek_subtitle_margin >= 0
++        ? llrint(matroska->cue_relative_seek_subtitle_margin * 1e9 / matroska->time_scale)
++        : -1;
++    for (i = 0; i < s->nb_streams; i++) {
++        const AVStream *other = s->streams[i];
++        const AVCodecDescriptor *descriptor;
++        int named = 0, text;
++        if (other->codecpar->codec_type != AVMEDIA_TYPE_SUBTITLE ||
++            other->discard >= AVDISCARD_ALL)
++            continue;
++        descriptor = avcodec_descriptor_get(other->codecpar->codec_id);
++        text = descriptor && (descriptor->props & AV_CODEC_PROP_TEXT_SUB);
++        for (j = 0; j < matroska->nb_cue_blocks; j++) {
++            const MatroskaCueBlock *block = &matroska->cue_blocks[j];
++            if (block->stream_index != i)
++                continue;
++            named = 1;
++            if (block->cluster_pos != cluster_pos)
++                continue;
++            if (!block->relative_pos)
++                return;
++            if (block->relative_pos >= cue->relative_pos)
++                continue;
++            if (text && matroska_cue_block_ended(block, timestamp, margin))
++                continue;
++            if (block->relative_pos < target->relative_pos)
++                target = block;
++        }
++        if (!named)
++            return;
++    }
++    if (target != cue) {
++        MatroskaTrack *subtitle = matroska_find_track_by_num(matroska, target->track);
++        if (!subtitle || subtitle->time_scale != 1.0)
++            return;
++    }
++
++    /* The 8 places the block can be, in one read. */
++    first = cluster_pos + 4 + 1 + (int64_t)target->relative_pos;
++    if (avio_seek(pb, first, SEEK_SET) != first)
++        goto restart;
++    got = avio_read(pb, head, sizeof(head));
++    if (got < 8)
++        goto restart;
++    for (i = 1; i <= 8; i++) {
++        if (matroska_cued_block_at(head + i - 1, got - (i - 1), target, target == cue &&
++                                   st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO, &candidate_time)) {
++            found++;
++            size_length = i;
++            cluster_time = candidate_time;
++        }
++    }
++    if (found != 1)
++        goto restart;
++    for (i = 0; i < matroska->nb_cue_blocks; i++) {
++        const MatroskaCueBlock *block = &matroska->cue_blocks[i];
++        if (block->cluster_pos != cluster_pos)
++            continue;
++        if (block->timestamp < 0 || (uint64_t)block->timestamp < cluster_time)
++            goto restart;
++        if (block->track != target->track || !block->relative_pos)
++            continue;
++        if (block->relative_pos == target->relative_pos) {
++            if (block->timestamp != target->timestamp)
++                goto restart;
++        } else if (block->relative_pos < target->relative_pos
++                   ? block->timestamp > target->timestamp
++                   : block->timestamp < target->timestamp) {
++            goto restart;
++        }
++    }
++    block_pos = cluster_pos + 4 + size_length + (int64_t)target->relative_pos;
++    if (matroska_reset_status(matroska, 0, block_pos) < 0)
++        goto restart;
++    matroska->levels[1] = (MatroskaLevel){ .start = cluster_pos + 4 + size_length,
++                                           .length = EBML_UNKNOWN_LENGTH };
++    matroska->num_levels = 2;
++    cluster->pos = cluster_pos;
++    cluster->timecode = cluster_time;
++    av_log(s, AV_LOG_DEBUG, "Seek to the cued block at %"PRId64", %"PRIu64
++           " bytes into its cluster at %"PRId64"\n", block_pos, target->relative_pos, cluster_pos);
++    return;
++
++restart:
++    matroska_reset_status(matroska, 0, cluster_pos);
++}
++
+ static int matroska_read_seek(AVFormatContext *s, int stream_index,
+                               int64_t timestamp, int flags)
+ {
+@@ -4400,6 +4672,9 @@ static int matroska_read_seek(AVFormatContext *s, int stream_index,
+     }
+     matroska->skip_to_keyframe = 1;
+     matroska->done             = 0;
++    if (!(flags & AVSEEK_FLAG_ANY))
++        matroska_seek_cued_block(matroska, st, sti->index_entries[index].pos,
++                                 sti->index_entries[index].timestamp);
+     avpriv_update_cur_dts(s, st, sti->index_entries[index].timestamp);
+     return 0;
+ err:
+@@ -4426,6 +4701,8 @@ static int matroska_read_close(AVFormatContext *s)
+         if (tracks[n].type == MATROSKA_TRACK_TYPE_AUDIO)
+             av_freep(&tracks[n].audio.buf);
+     ebml_free(matroska_segment, matroska);
++    av_freep(&matroska->cue_blocks);
++    matroska->nb_cue_blocks = 0;
+ 
+     return 0;
+ }
+@@ -4883,11 +5160,27 @@ const FFInputFormat ff_webm_dash_manifest_demuxer = {
+ };
+ #endif
+ 
++static const AVOption matroska_options[] = {
++    { "cue_relative_seek", "seek straight to the block a cue's CueRelativePosition names, not through its cluster from the start",
++      offsetof(MatroskaDemuxContext, cue_relative_seek), AV_OPT_TYPE_BOOL, { .i64 = 1 }, 0, 1, AV_OPT_FLAG_DECODING_PARAM },
++    { "cue_relative_seek_subtitle_margin", "on such a seek, a subtitle block that ended this many seconds before the key frame or more is not read (< 0: every one is)",
++      offsetof(MatroskaDemuxContext, cue_relative_seek_subtitle_margin), AV_OPT_TYPE_DOUBLE, { .dbl = -1 }, -1, 86400, AV_OPT_FLAG_DECODING_PARAM },
++    { NULL },
++};
++
++static const AVClass matroska_class = {
++    .class_name = "matroska,webm demuxer",
++    .item_name  = av_default_item_name,
++    .option     = matroska_options,
++    .version    = LIBAVUTIL_VERSION_INT,
++};
++
+ const FFInputFormat ff_matroska_demuxer = {
+     .p.name         = "matroska,webm",
+     .p.long_name    = NULL_IF_CONFIG_SMALL("Matroska / WebM"),
+     .p.extensions   = "mkv,mk3d,mka,mks,webm",
+     .p.mime_type    = "audio/webm,audio/x-matroska,video/webm,video/x-matroska",
++    .p.priv_class   = &matroska_class,
+     .priv_data_size = sizeof(MatroskaDemuxContext),
+     .flags_internal = FF_INFMT_FLAG_INIT_CLEANUP,
+     .read_probe     = matroska_probe,

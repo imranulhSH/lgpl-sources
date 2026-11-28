@@ -1,0 +1,7 @@
+# Verifying artifact slice appletvos-arm64
+Verified FFmpeg Apple install prefix: /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvos-arm64
+Verified FFmpeg Apple dependency prefix: /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvos-arm64
+# Verifying artifact slice appletvsimulator-arm64
+Verified FFmpeg Apple install prefix: /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvsimulator-arm64
+Verified FFmpeg Apple dependency prefix: /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvsimulator-arm64
+Verified FFmpeg Apple artifact root: /tmp/nsurator-tvos-core-cbc3434a0d54/artifact

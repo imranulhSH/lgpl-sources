@@ -1,0 +1,187 @@
+Cleaning... 0 files.
+The Meson build system
+Version: 1.12.1
+Source dir: $WORK/sources/dav1d-1.5.3
+Build dir: $WORK/dav1d-build/appletvos-arm64
+Build type: cross build
+Project name: dav1d
+Project version: 1.5.3
+C compiler for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS27.0.sdk -fembed-bitcode -fPIC (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+C linker for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS27.0.sdk -fembed-bitcode -fPIC ld64 27037.1
+C compiler for the build machine: cc (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+C linker for the build machine: cc ld64 27037.1
+Build machine cpu family: aarch64
+Build machine cpu: aarch64
+Host machine cpu family: aarch64
+Host machine cpu: arm64
+Target machine cpu family: aarch64
+Target machine cpu: arm64
+Fetching value of define "DAV1D_API_VERSION_MAJOR" : 7 (cached)
+Fetching value of define "DAV1D_API_VERSION_MINOR" : 0 (cached)
+Fetching value of define "DAV1D_API_VERSION_PATCH" : 0 (cached)
+Dependency threads for host machine found: YES unknown (cached)
+Checking for function "clock_gettime" : YES (cached)
+Checking for function "posix_memalign" : YES (cached)
+Checking for function "memalign" : NO (cached)
+Checking for function "aligned_alloc" : YES (cached)
+Library m found: YES
+Check usable header "stdatomic.h" : YES (cached)
+Check usable header "sys/types.h" : YES (cached)
+Check usable header "unistd.h" : YES (cached)
+Check usable header "io.h" : NO (cached)
+Check usable header "pthread_np.h" : NO (cached)
+Checking for function "getopt_long" : YES (cached)
+Checking for function "getauxval" : NO (cached)
+Checking for function "elf_aux_info" : NO (cached)
+Checking for function "pthread_getaffinity_np" with dependency threads: NO (cached)
+Checking for function "pthread_setaffinity_np" with dependency threads: NO (cached)
+Checking for function "pthread_setname_np" with dependency threads: YES (cached)
+Checking for function "pthread_set_name_np" with dependency threads: NO (cached)
+Checking if "_Generic" compiles: YES (cached)
+Compiler for C supports arguments -fvisibility=hidden: YES (cached)
+Compiler for C supports arguments -Wundef: YES (cached)
+Compiler for C supports arguments -Werror=vla: YES (cached)
+Compiler for C supports arguments -Wno-maybe-uninitialized: NO (cached)
+Compiler for C supports arguments -Wno-missing-field-initializers: YES (cached)
+Compiler for C supports arguments -Wno-unused-parameter: YES (cached)
+Compiler for C supports arguments -Wstrict-prototypes: YES (cached)
+Compiler for C supports arguments -Werror=missing-prototypes: YES (cached)
+Compiler for C supports arguments -Wshorten-64-to-32: YES (cached)
+Compiler for C supports arguments -fomit-frame-pointer: YES (cached)
+Compiler for C supports arguments -ffast-math: YES (cached)
+Compiler for C supports arguments -fno-align-functions: YES (cached)
+Checking if "DOTPROD" compiles: YES (cached)
+Checking if "I8MM" compiles: YES (cached)
+Checking if "SVE" compiles: YES (cached)
+Checking if "SVE2" compiles: YES (cached)
+Configuring config.h using configuration
+Found pkg-config: NO
+Build targets in project: 5
+
+dav1d 1.5.3
+
+  User defined options
+    Cross files    : /tmp/nsurator-tvos-core-cbc3434a0d54/dav1d-build/appletvos-arm64/dav1d-appletvos-arm64.cross
+    buildtype      : release
+    default_library: static
+    enable_docs    : false
+    enable_examples: false
+    enable_tests   : false
+    enable_tools   : false
+    libdir         : lib
+    prefix         : /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64
+    wrap_mode      : nodownload
+
+Found ninja-1.13.2.git.kitware.jobserver-pipe-1 at $TOOLING/venv/bin/ninja
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+ninja: Entering directory `$WORK/dav1d-build/appletvos-arm64'
+[1/3] Generating include/vcs_version.h with a custom command
+INFO: autodetecting backend as ninja
+INFO: calculating backend command to run: $TOOLING/venv/bin/ninja -C $WORK/dav1d-build/appletvos-arm64
+ninja: Entering directory `$WORK/dav1d-build/appletvos-arm64'
+[1/3] Generating include/vcs_version.h with a custom command
+Installing src/libdav1d.a to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/lib
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/common.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/dav1d
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/data.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/dav1d
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/dav1d.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/dav1d
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/headers.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/dav1d
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/picture.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/dav1d
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/version.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/include/dav1d
+Installing $WORK/dav1d-build/appletvos-arm64/meson-private/dav1d.pc to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvos-arm64/lib/pkgconfig
+Cleaning... 0 files.
+The Meson build system
+Version: 1.12.1
+Source dir: $WORK/sources/dav1d-1.5.3
+Build dir: $WORK/dav1d-build/appletvsimulator-arm64
+Build type: cross build
+Project name: dav1d
+Project version: 1.5.3
+C compiler for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0-simulator -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator27.0.sdk -fembed-bitcode -fPIC (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+C linker for the host machine: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-tvos17.0-simulator -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator27.0.sdk -fembed-bitcode -fPIC ld64 27037.1
+C compiler for the build machine: cc (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.2)")
+C linker for the build machine: cc ld64 27037.1
+Build machine cpu family: aarch64
+Build machine cpu: aarch64
+Host machine cpu family: aarch64
+Host machine cpu: arm64
+Target machine cpu family: aarch64
+Target machine cpu: arm64
+Fetching value of define "DAV1D_API_VERSION_MAJOR" : 7 (cached)
+Fetching value of define "DAV1D_API_VERSION_MINOR" : 0 (cached)
+Fetching value of define "DAV1D_API_VERSION_PATCH" : 0 (cached)
+Dependency threads for host machine found: YES unknown (cached)
+Checking for function "clock_gettime" : YES (cached)
+Checking for function "posix_memalign" : YES (cached)
+Checking for function "memalign" : NO (cached)
+Checking for function "aligned_alloc" : YES (cached)
+Library m found: YES
+Check usable header "stdatomic.h" : YES (cached)
+Check usable header "sys/types.h" : YES (cached)
+Check usable header "unistd.h" : YES (cached)
+Check usable header "io.h" : NO (cached)
+Check usable header "pthread_np.h" : NO (cached)
+Checking for function "getopt_long" : YES (cached)
+Checking for function "getauxval" : NO (cached)
+Checking for function "elf_aux_info" : NO (cached)
+Checking for function "pthread_getaffinity_np" with dependency threads: NO (cached)
+Checking for function "pthread_setaffinity_np" with dependency threads: NO (cached)
+Checking for function "pthread_setname_np" with dependency threads: YES (cached)
+Checking for function "pthread_set_name_np" with dependency threads: NO (cached)
+Checking if "_Generic" compiles: YES (cached)
+Compiler for C supports arguments -fvisibility=hidden: YES (cached)
+Compiler for C supports arguments -Wundef: YES (cached)
+Compiler for C supports arguments -Werror=vla: YES (cached)
+Compiler for C supports arguments -Wno-maybe-uninitialized: NO (cached)
+Compiler for C supports arguments -Wno-missing-field-initializers: YES (cached)
+Compiler for C supports arguments -Wno-unused-parameter: YES (cached)
+Compiler for C supports arguments -Wstrict-prototypes: YES (cached)
+Compiler for C supports arguments -Werror=missing-prototypes: YES (cached)
+Compiler for C supports arguments -Wshorten-64-to-32: YES (cached)
+Compiler for C supports arguments -fomit-frame-pointer: YES (cached)
+Compiler for C supports arguments -ffast-math: YES (cached)
+Compiler for C supports arguments -fno-align-functions: YES (cached)
+Checking if "DOTPROD" compiles: YES (cached)
+Checking if "I8MM" compiles: YES (cached)
+Checking if "SVE" compiles: YES (cached)
+Checking if "SVE2" compiles: YES (cached)
+Configuring config.h using configuration
+Found pkg-config: NO
+Build targets in project: 5
+
+dav1d 1.5.3
+
+  User defined options
+    Cross files    : /tmp/nsurator-tvos-core-cbc3434a0d54/dav1d-build/appletvsimulator-arm64/dav1d-appletvsimulator-arm64.cross
+    buildtype      : release
+    default_library: static
+    enable_docs    : false
+    enable_examples: false
+    enable_tests   : false
+    enable_tools   : false
+    libdir         : lib
+    prefix         : /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64
+    wrap_mode      : nodownload
+
+Found ninja-1.13.2.git.kitware.jobserver-pipe-1 at $TOOLING/venv/bin/ninja
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+WARNING: Cross file does not specify strip binary, result will not be stripped.
+ninja: Entering directory `$WORK/dav1d-build/appletvsimulator-arm64'
+[1/3] Generating include/vcs_version.h with a custom command
+INFO: autodetecting backend as ninja
+INFO: calculating backend command to run: $TOOLING/venv/bin/ninja -C $WORK/dav1d-build/appletvsimulator-arm64
+ninja: Entering directory `$WORK/dav1d-build/appletvsimulator-arm64'
+[1/3] Generating include/vcs_version.h with a custom command
+Installing src/libdav1d.a to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/lib
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/common.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/dav1d
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/data.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/dav1d
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/dav1d.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/dav1d
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/headers.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/dav1d
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/picture.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/dav1d
+Installing $WORK/sources/dav1d-1.5.3/include/dav1d/version.h to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/include/dav1d
+Installing $WORK/dav1d-build/appletvsimulator-arm64/meson-private/dav1d.pc to /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies/appletvsimulator-arm64/lib/pkgconfig
+Built dav1d Apple slices under: /tmp/nsurator-tvos-core-cbc3434a0d54/dependencies

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "generator": "scripts/build-ffmpeg-apple.sh",
+  "installRoot": "/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install",
+  "dependencyRoot": "/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies",
+  "installRootRelativePath": "install",
+  "dependencyRootRelativePath": "dependencies",
+  "networkProtocolsEnabled": false,
+  "linkProfile": "base",
+  "swiftpmLinkMode": "static",
+  "requiredRuntimeLibraries": ["libbluray", "libdav1d"],
+  "requiredConfigureFlags": ["--enable-libbluray", "--enable-libdav1d", "--disable-network"],
+  "thirdPartyLicenseFiles": [{"component":"dav1d","relativePath":"licenses/dav1d-COPYING"},{"component":"FFmpeg","relativePath":"licenses/FFmpeg-COPYING.LGPLv2.1"},{"component":"FFmpeg","relativePath":"licenses/FFmpeg-LICENSE.md"},{"component":"libbluray","relativePath":"licenses/libbluray-COPYING"},{"component":"libudfread","relativePath":"licenses/libudfread-COPYING"}],
+  "distributionSupportFiles": [],
+
+  "slices": [
+    {
+      "name": "appletvos-arm64",
+      "sdk": "appletvos",
+      "runtimePlatform": "tvos",
+      "targetTriple": "arm64-apple-tvos17.0",
+      "expectedPlatform": "TVOS",
+      "ffmpegPrefix": "/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvos-arm64",
+      "dependencyPrefix": "/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvos-arm64",
+      "ffmpegPrefixRelativePath": "install/appletvos-arm64",
+      "dependencyPrefixRelativePath": "dependencies/appletvos-arm64",
+      "xcconfigSdkCondition": "sdk=appletvos*",
+      "swiftpmFlags": "-Xcc -DNPC_FFMPEG_CSHIM_ENABLE_LIBAV=1 -Xcc -DNPC_FFMPEG_CSHIM_ENABLE_LIBBLURAY=1 -Xcc -I/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvos-arm64/include -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvos-arm64/lib/libavfilter.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvos-arm64/lib/libavformat.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvos-arm64/lib/libavcodec.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvos-arm64/lib/libavutil.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvos-arm64/lib/libswresample.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvos-arm64/lib/libswscale.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvos-arm64/lib/libbluray.a -Xlinker -framework -Xlinker CoreFoundation -Xlinker -framework -Xlinker CoreMedia -Xlinker -framework -Xlinker CoreVideo -Xlinker -framework -Xlinker AudioToolbox -Xlinker -framework -Xlinker VideoToolbox -Xlinker -lz -Xlinker -lbz2 -Xlinker -liconv -Xcc -I/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvos-arm64/include -Xlinker -L/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvos-arm64/lib -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvos-arm64/lib/libdav1d.a  -Xlinker -lm -Xlinker -lc++",
+      "requiredRuntimeLibraries": ["libbluray", "libdav1d"],
+      "requiredConfigureFlags": ["--enable-libbluray", "--enable-libdav1d", "--disable-network"]
+    }
+,
+    {
+      "name": "appletvsimulator-arm64",
+      "sdk": "appletvsimulator",
+      "runtimePlatform": "tvossimulator",
+      "targetTriple": "arm64-apple-tvos17.0-simulator",
+      "expectedPlatform": "TVOSSIMULATOR",
+      "ffmpegPrefix": "/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvsimulator-arm64",
+      "dependencyPrefix": "/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvsimulator-arm64",
+      "ffmpegPrefixRelativePath": "install/appletvsimulator-arm64",
+      "dependencyPrefixRelativePath": "dependencies/appletvsimulator-arm64",
+      "xcconfigSdkCondition": "sdk=appletvsimulator*",
+      "swiftpmFlags": "-Xcc -DNPC_FFMPEG_CSHIM_ENABLE_LIBAV=1 -Xcc -DNPC_FFMPEG_CSHIM_ENABLE_LIBBLURAY=1 -Xcc -I/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvsimulator-arm64/include -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvsimulator-arm64/lib/libavfilter.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvsimulator-arm64/lib/libavformat.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvsimulator-arm64/lib/libavcodec.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvsimulator-arm64/lib/libavutil.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvsimulator-arm64/lib/libswresample.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/install/appletvsimulator-arm64/lib/libswscale.a -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvsimulator-arm64/lib/libbluray.a -Xlinker -framework -Xlinker CoreFoundation -Xlinker -framework -Xlinker CoreMedia -Xlinker -framework -Xlinker CoreVideo -Xlinker -framework -Xlinker AudioToolbox -Xlinker -framework -Xlinker VideoToolbox -Xlinker -lz -Xlinker -lbz2 -Xlinker -liconv -Xcc -I/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvsimulator-arm64/include -Xlinker -L/tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvsimulator-arm64/lib -Xlinker /tmp/nsurator-tvos-core-cbc3434a0d54/artifact/dependencies/appletvsimulator-arm64/lib/libdav1d.a  -Xlinker -lm -Xlinker -lc++",
+      "requiredRuntimeLibraries": ["libbluray", "libdav1d"],
+      "requiredConfigureFlags": ["--enable-libbluray", "--enable-libdav1d", "--disable-network"]
+    }
+  ]
+}
